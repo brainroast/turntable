@@ -1,28 +1,53 @@
-# Music Player Web Application
+# Turntable - Music Player Web Application
 
 A polished, minimalist music player application featuring standard controls, visualizer/vinyl animations, custom virtual keyboard, and a robust fallback-enabled YouTube search engine.
 
-## 🚀 Panduan Deploy ke GitHub Pages
+---
 
-Aplikasi ini telah dikonfigurasi agar bisa di-deploy dengan mudah secara otomatis ke **GitHub Pages** menggunakan GitHub Actions. Berikut adalah langkah-langkahnya:
+## 🛑 Mengapa Whitescreen Terjadi Saat Deploy? (Penting!)
 
-### 1. Inisialisasi Git & Push ke GitHub
-Lakukan inisialisasi git dan unggah kode ini ke repositori baru Anda di GitHub:
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/USERNAME/REPO_NAME.git
-git push -u origin main
-```
+Jika Anda mengunggah kode langsung ke GitHub dan memilih **"Deploy from a branch"** (menggunakan branch `main`), Anda akan melihat **layar putih polos (whitescreen)**.
 
-### 2. Mengaktifkan GitHub Pages di Repositori
-1. Masuk ke halaman repositori Anda di GitHub.
-2. Pergi ke **Settings** -> **Pages** (di bawah menu *Code and automation*).
-3. Pada bagian **Build and deployment**:
-   - Di dropdown **Source**, pilih **GitHub Actions**.
-4. GitHub Actions akan secara otomatis mendeteksi file konfigurasi alur kerja `.github/workflows/deploy.yml` dan mulai membangun serta mempublikasikan situs web Anda.
+Hal ini terjadi karena browser di GitHub Pages mencoba membaca langsung file mentah `/src/main.tsx` di folder root. Browser **tidak bisa membaca file `.tsx` secara langsung** tanpa proses kompilasi (*build*). 
+
+Berikut adalah **dua cara mudah** untuk mengatasinya agar aplikasi berjalan sempurna tanpa whitescreen:
+
+---
+
+## 🚀 Cara 1: Menggunakan GitHub Actions (Sangat Direkomendasikan)
+
+Metode ini akan secara otomatis mem-build aplikasi setiap kali Anda melakukan `git push` ke GitHub, kemudian mengunggah hasil build akhir yang sudah matang tanpa Anda perlu melakukan apa-apa lagi.
+
+### Latihan Push & Deploy:
+1. Hubungkan kode Anda ke repositori GitHub baru:
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit for Turntable"
+   git branch -M main
+   git remote add origin https://github.com/USERNAME/REPO_NAME.git
+   git push -u origin main
+   ```
+2. Masuk ke halaman repositori Anda di GitHub.
+3. Pergi ke menu **Settings** -> **Pages** (di bawah menu *Code and automation*).
+4. Pada bagian **Build and deployment** -> **Source**:
+   - Ubah dropdown dari **Deploy from a branch** menjadi **GitHub Actions**.
+5. Selesai! Buka tab **Actions** di repositori Anda untuk melihat proses build otomatis berjalan. Setelah selesai, link situs Anda akan langsung aktif dan terhindar dari whitescreen.
+
+---
+
+## 📦 Cara 2: Menggunakan Perintah `npm run deploy` (Klasik / Manual)
+
+Jika Anda ingin tetap menggunakan pengaturan bawaan **"Deploy from a branch"**, kami telah mengintegrasikan modul otomatis `gh-pages` untuk Anda:
+
+1. Di komputer lokal Anda, jalankan perintah berikut:
+   ```bash
+   npm run deploy
+   ```
+2. Perintah di atas akan otomatis mengkompilasi aplikasi Anda ke folder `dist` lalu mengunggahnya ke branch baru bernama `gh-pages` di GitHub.
+3. Di halaman GitHub repositori Anda, buka **Settings** -> **Pages**.
+4. Pada bagian **Build and deployment** -> **Source**, pilih **Deploy from a branch**.
+5. Pada dropdown di bawahnya, pilih branch **gh-pages** dan folder **/ (root)**, lalu klik **Save**.
 
 ---
 
