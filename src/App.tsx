@@ -123,7 +123,7 @@ function filterOriginalArtistTracks(results: any[]): any[] {
   return combined.slice(0, 5);
 }
 
-async function clientSideSearchYoutube(query: string): Promise<any[]> {
+async function originalScraperFallback(query: string): Promise<any[]> {
   const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + " official release")}&sp=EgIQAQ%253D%253D`;
   
   // CORS-bypassing proxies
@@ -209,12 +209,121 @@ async function clientSideSearchYoutube(query: string): Promise<any[]> {
       
       throw new Error("No results found in page structure");
     } catch (err) {
-      console.warn("Proxy attempt failed:", err);
+      console.warn("Proxy scraper attempt failed:", err);
       lastError = err;
     }
   }
 
-  throw lastError || new Error("All client-side search attempts failed");
+  throw lastError || new Error("All proxy scraper attempts failed");
+}
+
+async function anyPromise<T>(promises: Promise<T>[]): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    let rejectedCount = 0;
+    const errors: any[] = [];
+    if (promises.length === 0) {
+      reject(new Error("No promises provided"));
+      return;
+    }
+    promises.forEach((p) => {
+      Promise.resolve(p).then(
+        (val) => resolve(val),
+        (err) => {
+          rejectedCount++;
+          errors.push(err);
+          if (rejectedCount === promises.length) {
+            reject(new Error("All promises were rejected"));
+          }
+        }
+      );
+    });
+  });
+}
+
+async function clientSideSearchYoutube(query: string): Promise<any[]> {
+  // Collection of fast and open public Invidious instances with CORS enabled
+  const instances = [
+    "https://inv.tux.im",
+    "https://yewtu.be",
+    "https://invidious.nerdvpn.de",
+    "https://invidious.privacydev.net",
+    "https://invidious.projectsegfau.lt",
+    "https://iv.melmac.space",
+    "https://invidious.no-logs.com",
+    "https://invidious.perennialte.ch"
+  ];
+
+  const searchSingleInstance = async (instance: string): Promise<any[]> => {
+    const url = `${instance}/api/v1/search?q=${encodeURIComponent(query + " official release")}&type=video`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second cutoff to keep searches fast
+
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!response.ok) {
+        throw new Error(`Instance HTTP status ${response.status}`);
+      }
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error("Empty or invalid results from instance");
+      }
+
+      const results = data.map((item: any) => ({
+        videoId: item.videoId,
+        title: cleanString(item.title || ""),
+        artist: cleanString(item.author || "YouTube Video"),
+        rawArtist: item.author,
+      })).filter((item: any) => item.videoId);
+
+      if (results.length === 0) {
+        throw new Error("No tracks with videoId found");
+      }
+
+      return filterOriginalArtistTracks(results);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
+  };
+
+  // We parallelize the top 4 instances. The first one that responds successfully wins!
+  const batch1 = instances.slice(0, 4);
+  const batch2 = instances.slice(4);
+
+  try {
+    return await anyPromise(batch1.map(inst => searchSingleInstance(inst)));
+  } catch (err1) {
+    console.warn("First batch of Invidious searches failed, trying backup batch...", err1);
+    try {
+      return await anyPromise(batch2.map(inst => searchSingleInstance(inst)));
+    } catch (err2) {
+      console.warn("Backup batch failed, fetching updated directory from invidious.io...", err2);
+      try {
+        const listRes = await fetch("https://api.invidious.io/instances.json");
+        if (listRes.ok) {
+          const list = await listRes.json();
+          const dynamicInstances: string[] = list
+            .filter((arr: any) => {
+              const instObj = arr[1];
+              return instObj && instObj.api && instObj.cors && instObj.type === "https" && instObj.uri;
+            })
+            .map((arr: any) => arr[1].uri)
+            .slice(0, 5);
+
+          if (dynamicInstances.length > 0) {
+            return await anyPromise(dynamicInstances.map(inst => searchSingleInstance(inst)));
+          }
+        }
+      } catch (err3) {
+        console.error("Failed to query live instances directory:", err3);
+      }
+    }
+  }
+
+  // Final ultimate fallback: scrape via HTML proxies
+  console.log("All Invidious attempts failed. Running HTML scraper fallback...");
+  return await originalScraperFallback(query);
 }
 
 const DEFAULT_PLAYLIST: Track[] = [
