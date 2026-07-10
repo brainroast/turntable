@@ -243,20 +243,24 @@ async function anyPromise<T>(promises: Promise<T>[]): Promise<T> {
 async function clientSideSearchYoutube(query: string): Promise<any[]> {
   // Collection of fast and open public Invidious instances with CORS enabled
   const instances = [
+    "https://invidious.privacydev.net",
     "https://inv.tux.im",
     "https://yewtu.be",
     "https://invidious.nerdvpn.de",
-    "https://invidious.privacydev.net",
     "https://invidious.projectsegfau.lt",
     "https://iv.melmac.space",
     "https://invidious.no-logs.com",
-    "https://invidious.perennialte.ch"
+    "https://invidious.perennialte.ch",
+    "https://invidious.slipfox.xyz",
+    "https://invidious.flokinet.to",
+    "https://iv.ggtyler.dev",
+    "https://invidious.drgns.space"
   ];
 
   const searchSingleInstance = async (instance: string): Promise<any[]> => {
     const url = `${instance}/api/v1/search?q=${encodeURIComponent(query + " official release")}&type=video`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second cutoff to keep searches fast
+    const timeoutId = setTimeout(() => controller.abort(), 2500); // Super fast 2.5s cutoff to filter out slow nodes
 
     try {
       const response = await fetch(url, { signal: controller.signal });
@@ -287,43 +291,13 @@ async function clientSideSearchYoutube(query: string): Promise<any[]> {
     }
   };
 
-  // We parallelize the top 4 instances. The first one that responds successfully wins!
-  const batch1 = instances.slice(0, 4);
-  const batch2 = instances.slice(4);
-
   try {
-    return await anyPromise(batch1.map(inst => searchSingleInstance(inst)));
-  } catch (err1) {
-    console.warn("First batch of Invidious searches failed, trying backup batch...", err1);
-    try {
-      return await anyPromise(batch2.map(inst => searchSingleInstance(inst)));
-    } catch (err2) {
-      console.warn("Backup batch failed, fetching updated directory from invidious.io...", err2);
-      try {
-        const listRes = await fetch("https://api.invidious.io/instances.json");
-        if (listRes.ok) {
-          const list = await listRes.json();
-          const dynamicInstances: string[] = list
-            .filter((arr: any) => {
-              const instObj = arr[1];
-              return instObj && instObj.api && instObj.cors && instObj.type === "https" && instObj.uri;
-            })
-            .map((arr: any) => arr[1].uri)
-            .slice(0, 5);
-
-          if (dynamicInstances.length > 0) {
-            return await anyPromise(dynamicInstances.map(inst => searchSingleInstance(inst)));
-          }
-        }
-      } catch (err3) {
-        console.error("Failed to query live instances directory:", err3);
-      }
-    }
+    // Race ALL instances in parallel! Whichever healthy node is fastest wins instantly (under 500ms usually)
+    return await anyPromise(instances.map(inst => searchSingleInstance(inst)));
+  } catch (err) {
+    console.warn("All parallel Invidious searches failed. Running HTML scraper fallback...", err);
+    return await originalScraperFallback(query);
   }
-
-  // Final ultimate fallback: scrape via HTML proxies
-  console.log("All Invidious attempts failed. Running HTML scraper fallback...");
-  return await originalScraperFallback(query);
 }
 
 const DEFAULT_PLAYLIST: Track[] = [
