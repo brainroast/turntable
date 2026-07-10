@@ -354,14 +354,29 @@ export default function App() {
     // Call server API for official video search results (returns up to 5 tracks)
     try {
       const apiBase = import.meta.env.VITE_API_URL || "";
-      const res = await fetch(`${apiBase}/api/search`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
+      let res;
+      try {
+        res = await fetch(`${apiBase}/api/search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+      } catch (fetchErr) {
+        // If fetch fails completely, it might be due to CORS, offline state, or missing backend (e.g. GitHub Pages)
+        if (window.location.hostname.endsWith("github.io") || window.location.hostname === "localhost" || !apiBase) {
+          throw new Error("GitHub Pages hanya mendukung hosting statis tanpa server backend. Anda tetap bisa memutar lagu dengan langsung memasukkan ID Video YouTube (misal: dQw4w9WgXcQ) atau link YouTube lengkap ke kolom input.");
+        }
+        throw fetchErr;
+      }
 
       if (!res.ok) {
         let errMsg = "Failed to search for song";
+        if (res.status === 405 || res.status === 404) {
+          if (window.location.hostname.endsWith("github.io")) {
+            throw new Error("GitHub Pages hanya mendukung hosting statis tanpa server backend. Anda tetap bisa memutar lagu dengan langsung memasukkan ID Video YouTube (misal: dQw4w9WgXcQ) atau link YouTube lengkap ke kolom input.");
+          }
+          throw new Error(`Pencarian tidak tersedia di server statis ini (Error ${res.status}). Silakan masukkan ID Video YouTube atau link YouTube secara langsung.`);
+        }
         try {
           const contentType = res.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
@@ -407,7 +422,8 @@ export default function App() {
     } catch (err: any) {
       console.error(err);
       setSearchError(err.message || "Failed to find song. Try another keyword.");
-      setTimeout(() => setSearchError(""), 4000);
+      const delay = err.message?.includes("GitHub Pages") ? 15000 : 4000;
+      setTimeout(() => setSearchError(""), delay);
     } finally {
       setIsSearching(false);
     }
@@ -619,7 +635,7 @@ export default function App() {
 
                 {/* Error Banner */}
                 {searchError && (
-                  <div className="text-[9px] text-red-400 font-mono tracking-widest uppercase animate-pulse">
+                  <div className="text-[10px] sm:text-xs text-red-400 font-mono tracking-wider bg-red-950/30 border border-red-900/40 rounded-xl p-3 leading-relaxed whitespace-pre-line">
                     {searchError}
                   </div>
                 )}
