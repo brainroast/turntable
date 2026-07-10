@@ -78,8 +78,8 @@ function filterOriginalArtistTracks(results: any[]): any[] {
     return isOfficialSource;
   });
 
-  if (strictResults.length >= 3) {
-    return strictResults.slice(0, 5);
+  if (strictResults.length >= 5) {
+    return strictResults.slice(0, 15);
   }
 
   // Tier 2: Moderately relaxed check
@@ -117,10 +117,10 @@ function filterOriginalArtistTracks(results: any[]): any[] {
   }
 
   if (combined.length === 0) {
-    return results.slice(0, 5);
+    return results.slice(0, 15);
   }
 
-  return combined.slice(0, 5);
+  return combined.slice(0, 15);
 }
 
 async function originalScraperFallback(query: string, mode: "song" | "artist" = "song"): Promise<any[]> {
@@ -183,7 +183,7 @@ async function originalScraperFallback(query: string, mode: "song" | "artist" = 
                       artist: cleanString(artist),
                       rawArtist: artist,
                     });
-                    if (results.length >= 25) {
+                    if (results.length >= 50) {
                       break;
                     }
                   }

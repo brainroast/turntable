@@ -63,8 +63,8 @@ function filterOriginalArtistTracks(results: any[]): any[] {
     return isOfficialSource;
   });
 
-  if (strictResults.length >= 3) {
-    return strictResults.slice(0, 5);
+  if (strictResults.length >= 5) {
+    return strictResults.slice(0, 15);
   }
 
   // Tier 2: Moderately relaxed check (exclude covers, remixes, and explicit lyric channels, but allow original videos from other channels if not enough strict results)
@@ -104,12 +104,12 @@ function filterOriginalArtistTracks(results: any[]): any[] {
     }
   }
 
-  // Final fallback: if combined is empty, return the top 5 raw results so search is never completely broken
+  // Final fallback: if combined is empty, return the top raw results so search is never completely broken
   if (combined.length === 0) {
-    return results.slice(0, 5);
+    return results.slice(0, 15);
   }
 
-  return combined.slice(0, 5);
+  return combined.slice(0, 15);
 }
 
 // Scraper function to search YouTube without an API key
@@ -172,7 +172,7 @@ async function searchYoutubeScraper(query: string, mode?: string) {
                     artist: cleanString(artist),
                     rawArtist: artist,
                   });
-                  if (results.length >= 25) {
+                  if (results.length >= 50) {
                     break;
                   }
                 }
@@ -217,7 +217,7 @@ app.post("/api/search", async (req, res) => {
 
     if (ytKey && ytKey.trim() !== "") {
       console.log("Using official YouTube Data API v3 for search:", query, "mode:", mode);
-      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query + suffix)}&type=video&maxResults=25&key=${ytKey.trim()}`;
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query + suffix)}&type=video&maxResults=50&key=${ytKey.trim()}`;
       
       const ytResponse = await fetch(searchUrl);
       if (ytResponse.ok) {
