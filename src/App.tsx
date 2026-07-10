@@ -307,31 +307,31 @@ const DEFAULT_PLAYLIST: Track[] = [
     videoId: "8GW6sLrK40k",
     title: "Resonance",
     artist: "HOME",
-    thumbnail: "https://img.youtube.com/vi/8GW6sLrK40k/hqdefault.jpg",
+    thumbnail: "https://i.ytimg.com/vi/8GW6sLrK40k/hqdefault.jpg",
   },
   {
     videoId: "UfcAVejsrU4",
     title: "Weightless",
     artist: "Marconi Union",
-    thumbnail: "https://img.youtube.com/vi/UfcAVejsrU4/hqdefault.jpg",
+    thumbnail: "https://i.ytimg.com/vi/UfcAVejsrU4/hqdefault.jpg",
   },
   {
     videoId: "S-Xm7s9eGxU",
     title: "Gymnopédie No. 1",
     artist: "Erik Satie",
-    thumbnail: "https://img.youtube.com/vi/S-Xm7s9eGxU/hqdefault.jpg",
+    thumbnail: "https://i.ytimg.com/vi/S-Xm7s9eGxU/hqdefault.jpg",
   },
   {
     videoId: "hhnZkNj764I",
     title: "Intro",
     artist: "The xx",
-    thumbnail: "https://img.youtube.com/vi/hhnZkNj764I/hqdefault.jpg",
+    thumbnail: "https://i.ytimg.com/vi/hhnZkNj764I/hqdefault.jpg",
   },
   {
     videoId: "24C7_m9X_h0",
     title: "Snowman",
     artist: "WYS",
-    thumbnail: "https://img.youtube.com/vi/24C7_m9X_h0/hqdefault.jpg",
+    thumbnail: "https://i.ytimg.com/vi/24C7_m9X_h0/hqdefault.jpg",
   },
 ];
 
@@ -402,8 +402,15 @@ export default function App() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const mainSearchInputRef = useRef<HTMLInputElement>(null);
 
+  const isFirstMountRef = useRef(true);
+
   // Auto focus input when keyboard is activated
   useEffect(() => {
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+
     if (isKeyboardActive) {
       setTimeout(() => {
         searchInputRef.current?.focus();
@@ -413,10 +420,6 @@ export default function App() {
           searchInputRef.current.value = "";
           searchInputRef.current.value = val;
         }
-      }, 50);
-    } else {
-      setTimeout(() => {
-        mainSearchInputRef.current?.focus();
       }, 50);
     }
   }, [isKeyboardActive]);
@@ -444,8 +447,8 @@ export default function App() {
 
     const initializePlayer = () => {
       playerRef.current = new window.YT.Player("youtube-player-element", {
-        height: "1px",
-        width: "1px",
+        height: "200px",
+        width: "200px",
         videoId: currentTrack.videoId,
         playerVars: {
           autoplay: 0,
@@ -456,6 +459,7 @@ export default function App() {
           modestbranding: 1,
           iv_load_policy: 3,
           origin: window.location.origin,
+          playsinline: 1,
         },
         events: {
           onReady: () => {
@@ -788,7 +792,7 @@ export default function App() {
           videoId: t.videoId,
           title: t.title || "Unknown Title",
           artist: t.artist || "Unknown Artist",
-          thumbnail: `https://img.youtube.com/vi/${t.videoId}/hqdefault.jpg`,
+          thumbnail: `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`,
         }));
         setSearchOptions(tracks);
         setSearchQuery("");
@@ -803,7 +807,7 @@ export default function App() {
         videoId: t.videoId,
         title: t.title || "Unknown Title",
         artist: t.artist || "Unknown Artist",
-        thumbnail: `https://img.youtube.com/vi/${t.videoId}/hqdefault.jpg`,
+        thumbnail: `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`,
       }));
       setSearchOptions(tracks);
       setSearchQuery("");
@@ -864,8 +868,8 @@ export default function App() {
 
   return (
     <div className="w-screen h-screen bg-[#000000] flex items-center justify-center overflow-hidden font-sans text-white select-none">
-      {/* Hidden YouTube Iframe Target */}
-      <div className="absolute w-[1px] h-[1px] opacity-0 pointer-events-none overflow-hidden">
+      {/* Hidden YouTube Iframe Target - Positioned off-screen with non-zero dimensions for iOS/Safari compatibility */}
+      <div className="fixed -left-[9999px] -top-[9999px] w-[200px] h-[200px] opacity-[0.01] pointer-events-none overflow-hidden">
         <div id="youtube-player-element"></div>
       </div>
 
@@ -926,9 +930,12 @@ export default function App() {
                       {/* Thumbnail with custom overlay hover effect */}
                       <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-black flex-shrink-0 border border-white/5 group-hover/item:border-white/15 transition-all">
                         <img
-                          src={track.thumbnail}
+                          src={track.thumbnail.replace("img.youtube.com", "i.ytimg.com")}
                           alt={track.title}
-                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
+                          }}
                           className="w-full h-full object-cover opacity-80 group-hover/item:scale-105 transition-transform duration-500"
                         />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
@@ -1404,10 +1411,13 @@ export default function App() {
                           <div className="relative flex-shrink-0">
                             {track.thumbnail ? (
                               <img
-                                src={track.thumbnail}
+                                src={track.thumbnail.replace("img.youtube.com", "i.ytimg.com")}
                                 alt=""
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
+                                }}
                                 className="w-9 h-9 object-cover rounded-md bg-neutral-900 border border-white/5"
-                                referrerPolicy="no-referrer"
                               />
                             ) : (
                               <div className="w-9 h-9 bg-neutral-900 rounded-md border border-white/5" />

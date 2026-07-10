@@ -71,9 +71,12 @@ export const VinylRecord: React.FC<VinylRecordProps> = ({
           {currentTrack.thumbnail ? (
             <div className="relative w-full h-full rounded-full overflow-hidden bg-black">
               <img
-                src={currentTrack.thumbnail}
+                src={currentTrack.thumbnail.replace("img.youtube.com", "i.ytimg.com")}
                 alt={currentTrack.title}
-                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
+                }}
                 className="w-full h-full object-cover rounded-full select-none scale-105"
               />
               
