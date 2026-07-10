@@ -353,7 +353,7 @@ export default function App() {
 
     // Call server API for official video search results (returns up to 5 tracks)
     try {
-      const apiBase = (import.meta as any).env?.VITE_API_URL || "";
+      const apiBase = import.meta.env.VITE_API_URL || "";
       const res = await fetch(`${apiBase}/api/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
