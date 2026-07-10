@@ -113,9 +113,10 @@ function filterOriginalArtistTracks(results: any[]): any[] {
 }
 
 // Scraper function to search YouTube without an API key
-async function searchYoutubeScraper(query: string) {
+async function searchYoutubeScraper(query: string, mode?: string) {
+  const suffix = mode === "artist" ? " greatest hits" : " official release";
   // Ensure we search for videos only to avoid playlists
-  const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + " official release")}&sp=EgIQAQ%253D%253D`;
+  const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + suffix)}&sp=EgIQAQ%253D%253D`;
   const response = await fetch(searchUrl, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
@@ -206,16 +207,17 @@ async function searchYoutubeScraper(query: string) {
 // API endpoint to search YouTube videos using YouTube Data API v3, with a robust scraper fallback (No AI, No Google Search Grounding)
 app.post("/api/search", async (req, res) => {
   try {
-    const { query } = req.body;
+    const { query, mode } = req.body;
     if (!query || typeof query !== "string") {
       return res.status(400).json({ error: "Query is required" });
     }
 
+    const suffix = mode === "artist" ? " greatest hits" : " official release";
     const ytKey = process.env.YOUTUBE_API_KEY;
 
     if (ytKey && ytKey.trim() !== "") {
-      console.log("Using official YouTube Data API v3 for search:", query);
-      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query + " official release")}&type=video&maxResults=25&key=${ytKey.trim()}`;
+      console.log("Using official YouTube Data API v3 for search:", query, "mode:", mode);
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query + suffix)}&type=video&maxResults=25&key=${ytKey.trim()}`;
       
       const ytResponse = await fetch(searchUrl);
       if (ytResponse.ok) {
@@ -239,8 +241,8 @@ app.post("/api/search", async (req, res) => {
     }
 
     // Direct search via clean scraping scraper
-    console.log("Using scraper for search query:", query);
-    const trackInfo = await searchYoutubeScraper(query);
+    console.log("Using scraper for search query:", query, "mode:", mode);
+    const trackInfo = await searchYoutubeScraper(query, mode);
     res.json(Array.isArray(trackInfo) ? trackInfo : [trackInfo]);
   } catch (error: any) {
     console.error("Error in /api/search:", error);

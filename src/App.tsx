@@ -123,8 +123,9 @@ function filterOriginalArtistTracks(results: any[]): any[] {
   return combined.slice(0, 5);
 }
 
-async function originalScraperFallback(query: string): Promise<any[]> {
-  const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + " official release")}&sp=EgIQAQ%253D%253D`;
+async function originalScraperFallback(query: string, mode: "song" | "artist" = "song"): Promise<any[]> {
+  const suffix = mode === "artist" ? " greatest hits" : " official release";
+  const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + suffix)}&sp=EgIQAQ%253D%253D`;
   
   // CORS-bypassing proxies
   const proxies = [
@@ -240,7 +241,8 @@ async function anyPromise<T>(promises: Promise<T>[]): Promise<T> {
   });
 }
 
-async function clientSideSearchYoutube(query: string): Promise<any[]> {
+async function clientSideSearchYoutube(query: string, mode: "song" | "artist" = "song"): Promise<any[]> {
+  const suffix = mode === "artist" ? " greatest hits" : " official release";
   // Collection of fast and open public Invidious instances with CORS enabled
   const instances = [
     "https://invidious.privacydev.net",
@@ -258,7 +260,7 @@ async function clientSideSearchYoutube(query: string): Promise<any[]> {
   ];
 
   const searchSingleInstance = async (instance: string): Promise<any[]> => {
-    const url = `${instance}/api/v1/search?q=${encodeURIComponent(query + " official release")}&type=video`;
+    const url = `${instance}/api/v1/search?q=${encodeURIComponent(query + suffix)}&type=video`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2500); // Super fast 2.5s cutoff to filter out slow nodes
 
@@ -296,7 +298,7 @@ async function clientSideSearchYoutube(query: string): Promise<any[]> {
     return await anyPromise(instances.map(inst => searchSingleInstance(inst)));
   } catch (err) {
     console.warn("All parallel Invidious searches failed. Running HTML scraper fallback...", err);
-    return await originalScraperFallback(query);
+    return await originalScraperFallback(query, mode);
   }
 }
 
@@ -386,6 +388,7 @@ export default function App() {
 
   // UI state
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<"song" | "artist">("song");
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [showQueue, setShowQueue] = useState(false);
@@ -634,7 +637,7 @@ export default function App() {
         const res = await fetch(`${apiBase}/api/search`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query }),
+          body: JSON.stringify({ query, mode: searchMode }),
         });
 
         if (res.ok) {
@@ -651,7 +654,7 @@ export default function App() {
       // If backend search did not succeed, use client-side YouTube scraper fallback
       if (!fetchSuccess) {
         try {
-          data = await clientSideSearchYoutube(query);
+          data = await clientSideSearchYoutube(query, searchMode);
         } catch (clientErr: any) {
           console.error("Client-side fallback search also failed:", clientErr);
           throw new Error("Gagal melakukan pencarian lagu. Silakan coba kata kunci lain, atau masukkan langsung ID/Link YouTube.");
@@ -856,7 +859,7 @@ export default function App() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="TYPE SONG TITLE OR PASTE LINK..."
+                    placeholder={searchMode === "song" ? "TYPE SONG TITLE OR PASTE LINK..." : "TYPE ARTIST NAME (E.G. TULUS, COLDPLAY)..."}
                     disabled={isSearching}
                     inputMode="none"
                     className="w-full bg-transparent border-b border-white/10 text-white text-xs sm:text-sm font-mono tracking-[0.1em] py-2 pl-7 pr-24 focus:outline-none focus:border-white/30 transition-all disabled:opacity-50"
@@ -882,6 +885,37 @@ export default function App() {
                     </button>
                   </div>
                 </form>
+
+                {/* Search Mode Toggle (Song vs. Artist) */}
+                <div className="flex items-center gap-3 px-1">
+                  <span className="text-[8px] font-mono tracking-[0.25em] text-white/30 uppercase">
+                    MODE:
+                  </span>
+                  <div className="flex bg-white/[0.03] p-0.5 rounded-lg border border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setSearchMode("song")}
+                      className={`px-3 py-1 text-[8px] font-mono tracking-widest uppercase transition-all duration-200 rounded-md ${
+                        searchMode === "song"
+                          ? "bg-white text-black font-bold shadow-sm"
+                          : "text-white/50 hover:text-white hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      SONG (LAGU)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSearchMode("artist")}
+                      className={`px-3 py-1 text-[8px] font-mono tracking-widest uppercase transition-all duration-200 rounded-md ${
+                        searchMode === "artist"
+                          ? "bg-white text-black font-bold shadow-sm"
+                          : "text-white/50 hover:text-white hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      ARTIST (PENYANYI)
+                    </button>
+                  </div>
+                </div>
 
                 {/* Error Banner */}
                 {searchError && (
