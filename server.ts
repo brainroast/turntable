@@ -117,18 +117,31 @@ async function searchYoutubeScraper(query: string, mode?: string) {
   const suffix = mode === "artist" ? " greatest hits" : " official release";
   // Ensure we search for videos only to avoid playlists
   const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + suffix)}&sp=EgIQAQ%253D%253D`;
-  const response = await fetch(searchUrl, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-      "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2500); // Strict 2.5s timeout to prevent server hang
+
+  let html = "";
+  try {
+    const response = await fetch(searchUrl, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+        "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+      }
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error("Failed to retrieve YouTube search page");
     }
-  });
 
-  if (!response.ok) {
-    throw new Error("Failed to retrieve YouTube search page");
+    html = await response.text();
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    console.error("Scraper fetch error:", err);
+    throw new Error("Scraper request timed out or was blocked.");
   }
-
-  const html = await response.text();
 
   // Try to extract ytInitialData JSON object containing structured search results
   let rawJson: string | null = null;

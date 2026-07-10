@@ -399,6 +399,27 @@ export default function App() {
 
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const mainSearchInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto focus input when keyboard is activated
+  useEffect(() => {
+    if (isKeyboardActive) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+        // Move cursor to end of text
+        if (searchInputRef.current) {
+          const val = searchInputRef.current.value;
+          searchInputRef.current.value = "";
+          searchInputRef.current.value = val;
+        }
+      }, 50);
+    } else {
+      setTimeout(() => {
+        mainSearchInputRef.current?.focus();
+      }, 50);
+    }
+  }, [isKeyboardActive]);
 
   // Setup YouTube player
   useEffect(() => {
@@ -718,42 +739,47 @@ export default function App() {
       return;
     }
 
-    // Call server API for official video search results (returns up to 5 tracks)
-    try {
+    // Call server API and client-side Invidious search in parallel race
+    const backendSearch = async (): Promise<any[]> => {
       const apiBase = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiBase}/api/search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, mode: searchMode }),
+      });
+      if (!res.ok) {
+        throw new Error(`Backend search failed: ${res.status}`);
+      }
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Backend did not return JSON");
+      }
+      const resData = await res.json();
+      if (!Array.isArray(resData) || resData.length === 0) {
+        throw new Error("Backend returned empty results");
+      }
+      return resData;
+    };
+
+    const clientSearch = async (): Promise<any[]> => {
+      const resData = await clientSideSearchYoutube(query, searchMode);
+      if (!Array.isArray(resData) || resData.length === 0) {
+        throw new Error("Client search returned empty results");
+      }
+      return resData;
+    };
+
+    try {
       let data: any[] = [];
-      let fetchSuccess = false;
 
       try {
-        const res = await fetch(`${apiBase}/api/search`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, mode: searchMode }),
-        });
-
-        if (res.ok) {
-          const contentType = res.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            data = await res.json();
-            fetchSuccess = true;
-          }
-        }
-      } catch (backendErr) {
-        console.warn("Backend search failed or unreachable, trying client-side fallback...", backendErr);
-      }
-
-      // If backend search did not succeed, use client-side YouTube scraper fallback
-      if (!fetchSuccess) {
-        try {
-          data = await clientSideSearchYoutube(query, searchMode);
-        } catch (clientErr: any) {
-          console.error("Client-side fallback search also failed, using robust offline/local library...", clientErr);
-        }
-      }
-
-      // If both fail or return 0 results, trigger the ultimate robust fallback engine
-      if (!Array.isArray(data) || data.length === 0) {
-        console.log("Triggering robust fallback tracks for query:", query);
+        // Race both backend and client-side searches. Whichever resolves first with valid data wins instantly!
+        data = await anyPromise([
+          backendSearch(),
+          clientSearch()
+        ]);
+      } catch (raceErr) {
+        console.warn("Both parallel backend and client searches failed/timed out, triggering robust fallback tracks...", raceErr);
         data = getSuperRobustFallbackTracks(query, searchMode);
       }
 
@@ -960,12 +986,12 @@ export default function App() {
                 <form onSubmit={handleSearchSubmit} className="relative flex items-center">
                   <Search className="absolute left-0 w-4 h-4 text-white/30" />
                   <input
+                    ref={searchInputRef}
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={searchMode === "song" ? "TYPE SONG TITLE OR PASTE LINK..." : "TYPE ARTIST NAME (E.G. TULUS, COLDPLAY)..."}
                     disabled={isSearching}
-                    inputMode="none"
                     className="w-full bg-transparent border-b border-white/10 text-white text-xs sm:text-sm font-mono tracking-[0.1em] py-2 pl-7 pr-24 focus:outline-none focus:border-white/30 transition-all disabled:opacity-50"
                   />
                   <div className="absolute right-0 flex items-center gap-2.5">
@@ -1161,6 +1187,7 @@ export default function App() {
                   <form onSubmit={handleSearchSubmit} className="relative flex items-center">
                     <Search className="absolute left-0 w-3.5 h-3.5 text-white/30" />
                     <input
+                      ref={mainSearchInputRef}
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -1168,7 +1195,6 @@ export default function App() {
                       onClick={() => setIsKeyboardActive(true)}
                       placeholder="PASTE YOUTUBE LINK OR VIDEO ID..."
                       disabled={isSearching}
-                      inputMode="none"
                       className="w-full bg-transparent border-b border-white/5 text-white/70 placeholder-white/20 text-[10px] font-mono tracking-[0.15em] py-1.5 pl-6 pr-8 focus:outline-none focus:border-white/20 transition-all disabled:opacity-50 cursor-pointer"
                     />
                     {isSearching ? (
