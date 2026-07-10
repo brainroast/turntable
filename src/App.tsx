@@ -27,6 +27,196 @@ declare global {
   }
 }
 
+// Client-Side YouTube Scraper fallback for static environments like GitHub Pages
+function cleanString(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/ - Topic$/i, "");
+}
+
+function filterOriginalArtistTracks(results: any[]): any[] {
+  // Tier 1: Strict original artist check
+  const strictResults = results.filter(r => {
+    const t = r.title.toLowerCase();
+    const a = (r.rawArtist || r.artist || "").toLowerCase();
+
+    // Blacklist check on title
+    const titleBlacklist = [
+      "cover", "remix", "tribute", "karaoke", "instrumental", "reaction",
+      "fanmade", "fan-made", "mashup", "parody", "tutorial", "how to play",
+      "choreography", "dance cover", "1 hour", "1hour", "looped", "slowed",
+      "reverb", "nightcore", "acapella", "guitar cover", "drum cover",
+      "piano cover", "bass cover", "live cover", "vocals only", "pitched",
+      "8d audio", "8d version", "earrape", "bass boosted", "mash-up",
+      "speed up", "sped up", "slow down", "slowed down", "10 hours",
+      "10hours", "loop", "synthesia", "chiptune", "8-bit", "8bit", "vlog background"
+    ];
+    if (titleBlacklist.some(term => t.includes(term))) return false;
+
+    // Blacklist check on channel name
+    const channelBlacklist = [
+      "lyrics", "lyric", "subtitles", "nightcore", "covers", "karaoke",
+      "promotions", "chilled", "vibes", "trap", "nation", "bass boosted",
+      "repost", "reloaded", "synthesia", "tutorial"
+    ];
+    if (channelBlacklist.some(term => a.includes(term))) return false;
+
+    const isOfficialSource =
+      a.endsWith(" - topic") ||
+      a.includes("vevo") ||
+      a.includes("official") ||
+      a.includes("records") ||
+      a.includes("music label") ||
+      a.includes("music group") ||
+      a.includes("label") ||
+      t.includes("official") ||
+      t.includes("original");
+
+    return isOfficialSource;
+  });
+
+  if (strictResults.length >= 3) {
+    return strictResults.slice(0, 5);
+  }
+
+  // Tier 2: Moderately relaxed check
+  const relaxedResults = results.filter(r => {
+    const t = r.title.toLowerCase();
+    const a = (r.rawArtist || r.artist || "").toLowerCase();
+
+    const titleBlacklist = [
+      "cover", "remix", "tribute", "karaoke", "instrumental", "reaction",
+      "fanmade", "fan-made", "mashup", "parody", "tutorial", "how to play",
+      "choreography", "dance cover", "1 hour", "1hour", "looped", "slowed",
+      "reverb", "nightcore", "acapella", "guitar cover", "drum cover",
+      "piano cover", "bass cover", "live cover", "vocals only", "pitched",
+      "8d audio", "8d version", "earrape", "bass boosted", "mash-up",
+      "speed up", "sped up", "slow down", "slowed down"
+    ];
+    if (titleBlacklist.some(term => t.includes(term))) return false;
+
+    const channelBlacklist = [
+      "covers", "karaoke", "nightcore", "repost", "reloaded", "synthesia"
+    ];
+    if (channelBlacklist.some(term => a.includes(term))) return false;
+
+    return true;
+  });
+
+  const combined = [...strictResults];
+  const seenIds = new Set(combined.map(r => r.videoId));
+
+  for (const r of relaxedResults) {
+    if (!seenIds.has(r.videoId)) {
+      combined.push(r);
+      seenIds.add(r.videoId);
+    }
+  }
+
+  if (combined.length === 0) {
+    return results.slice(0, 5);
+  }
+
+  return combined.slice(0, 5);
+}
+
+async function clientSideSearchYoutube(query: string): Promise<any[]> {
+  const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + " official release")}&sp=EgIQAQ%253D%253D`;
+  
+  // CORS-bypassing proxies
+  const proxies = [
+    (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+  ];
+
+  let lastError: any = null;
+  for (const proxyFn of proxies) {
+    try {
+      const proxyUrl = proxyFn(targetUrl);
+      const response = await fetch(proxyUrl);
+      if (!response.ok) {
+        throw new Error(`Proxy status ${response.status}`);
+      }
+      const html = await response.text();
+      
+      let rawJson: string | null = null;
+      const startPatterns = ["ytInitialData = ", "ytInitialData="];
+      for (const pattern of startPatterns) {
+        const idx = html.indexOf(pattern);
+        if (idx !== -1) {
+          const rawDataStart = html.substring(idx + pattern.length);
+          const endKeyword = ";</script>";
+          const endIndex = rawDataStart.indexOf(endKeyword);
+          if (endIndex !== -1) {
+            rawJson = rawDataStart.substring(0, endIndex).trim();
+            if (rawJson.endsWith(";")) {
+              rawJson = rawJson.slice(0, -1);
+            }
+            break;
+          }
+        }
+      }
+
+      if (rawJson) {
+        const data = JSON.parse(rawJson);
+        const contents = data?.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents;
+        if (contents && Array.isArray(contents)) {
+          const results: any[] = [];
+          for (const section of contents) {
+            const items = section?.itemSectionRenderer?.contents;
+            if (items && Array.isArray(items)) {
+              for (const item of items) {
+                if (item?.videoRenderer) {
+                  const vr = item.videoRenderer;
+                  const videoId = vr.videoId;
+                  const title = vr.title?.runs?.[0]?.text || "Unknown Title";
+                  const artist = vr.ownerText?.runs?.[0]?.text || "YouTube Music";
+
+                  if (videoId) {
+                    results.push({
+                      videoId,
+                      title: cleanString(title),
+                      artist: cleanString(artist),
+                      rawArtist: artist,
+                    });
+                    if (results.length >= 25) {
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          if (results.length > 0) {
+            return filterOriginalArtistTracks(results);
+          }
+        }
+      }
+
+      // Backup Regex Parser
+      const videoIdMatch = html.match(/"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"/);
+      if (videoIdMatch && videoIdMatch[1]) {
+        const videoId = videoIdMatch[1];
+        return [{
+          videoId,
+          title: query,
+          artist: "YouTube Video",
+        }];
+      }
+      
+      throw new Error("No results found in page structure");
+    } catch (err) {
+      console.warn("Proxy attempt failed:", err);
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error("All client-side search attempts failed");
+}
+
 const DEFAULT_PLAYLIST: Track[] = [
   {
     videoId: "8GW6sLrK40k",
@@ -354,57 +544,35 @@ export default function App() {
     // Call server API for official video search results (returns up to 5 tracks)
     try {
       const apiBase = import.meta.env.VITE_API_URL || "";
-      let res;
+      let data: any[] = [];
+      let fetchSuccess = false;
+
       try {
-        res = await fetch(`${apiBase}/api/search`, {
+        const res = await fetch(`${apiBase}/api/search`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query }),
         });
-      } catch (fetchErr) {
-        // If fetch fails completely, it might be due to CORS, offline state, or missing backend (e.g. GitHub Pages)
-        if (window.location.hostname.endsWith("github.io") || window.location.hostname === "localhost" || !apiBase) {
-          throw new Error("GitHub Pages hanya mendukung hosting statis tanpa server backend. Anda tetap bisa memutar lagu dengan langsung memasukkan ID Video YouTube (misal: dQw4w9WgXcQ) atau link YouTube lengkap ke kolom input.");
-        }
-        throw fetchErr;
-      }
 
-      if (!res.ok) {
-        let errMsg = "Failed to search for song";
-        if (res.status === 405 || res.status === 404) {
-          if (window.location.hostname.endsWith("github.io")) {
-            throw new Error("GitHub Pages hanya mendukung hosting statis tanpa server backend. Anda tetap bisa memutar lagu dengan langsung memasukkan ID Video YouTube (misal: dQw4w9WgXcQ) atau link YouTube lengkap ke kolom input.");
-          }
-          throw new Error(`Pencarian tidak tersedia di server statis ini (Error ${res.status}). Silakan masukkan ID Video YouTube atau link YouTube secara langsung.`);
-        }
-        try {
+        if (res.ok) {
           const contentType = res.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
-            const errData = await res.json();
-            errMsg = errData.error || errMsg;
-          } else {
-            const text = await res.text();
-            console.error("Non-JSON error response from server:", text.substring(0, 500));
-            errMsg = `Server error (${res.status})`;
+            data = await res.json();
+            fetchSuccess = true;
           }
-        } catch (parseErr) {
-          console.error("Error reading error details:", parseErr);
         }
-        throw new Error(errMsg);
+      } catch (backendErr) {
+        console.warn("Backend search failed or unreachable, trying client-side fallback...", backendErr);
       }
 
-      let data;
-      try {
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          data = await res.json();
-        } else {
-          const text = await res.text();
-          console.error("Expected JSON but received non-JSON success response:", text.substring(0, 500));
-          throw new Error("Invalid response format from server");
+      // If backend search did not succeed, use client-side YouTube scraper fallback
+      if (!fetchSuccess) {
+        try {
+          data = await clientSideSearchYoutube(query);
+        } catch (clientErr: any) {
+          console.error("Client-side fallback search also failed:", clientErr);
+          throw new Error("Gagal melakukan pencarian lagu. Silakan coba kata kunci lain, atau masukkan langsung ID/Link YouTube.");
         }
-      } catch (jsonErr: any) {
-        throw new Error(jsonErr.message || "Failed to parse search results");
       }
 
       if (Array.isArray(data) && data.length > 0) {
@@ -422,8 +590,7 @@ export default function App() {
     } catch (err: any) {
       console.error(err);
       setSearchError(err.message || "Failed to find song. Try another keyword.");
-      const delay = err.message?.includes("GitHub Pages") ? 15000 : 4000;
-      setTimeout(() => setSearchError(""), delay);
+      setTimeout(() => setSearchError(""), 5000);
     } finally {
       setIsSearching(false);
     }
