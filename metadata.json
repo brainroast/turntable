@@ -1,0 +1,6 @@
+{
+  "name": "Minimalist Music Player",
+  "description": "A minimalist music player optimized for tablet portrait orientation, integrated with YouTube.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
