@@ -956,7 +956,7 @@ export default function App() {
         }}
       >
       {/* Hidden YouTube Iframe Target */}
-      <div style={{ position: "absolute", left: "0px", top: "0px", width: "200px", height: "200px", opacity: 0.001, overflow: "hidden", pointerEvents: "none", zIndex: -10 }}>
+      <div style={{ position: "absolute", left: "0px", top: "0px", width: "200px", height: "200px", opacity: 0.01, overflow: "hidden", pointerEvents: "none" }}>
         <div id="youtube-player-element"></div>
       </div>
 

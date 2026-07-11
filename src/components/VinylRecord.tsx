@@ -50,6 +50,10 @@ export function VinylRecord(props: {
 
   var centerLabelStyle = {
     position: "absolute" as "absolute",
+    left: "50%",
+    top: "50%",
+    marginLeft: "-90px",
+    marginTop: "-90px",
     width: "180px",
     height: "180px",
     borderRadius: "50%",
@@ -123,16 +127,10 @@ export function VinylRecord(props: {
   };
 
   var handlePressStart = function (e: any) {
-    if (e && typeof e.preventDefault === "function") {
-      e.preventDefault();
-    }
     onPressStart();
   };
 
   var handlePressEnd = function (e: any) {
-    if (e && typeof e.preventDefault === "function") {
-      e.preventDefault();
-    }
     onPressEnd();
   };
 
