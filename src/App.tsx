@@ -257,41 +257,103 @@ async function clientSideSearchYoutube(query: string, mode: "song" | "artist" = 
     "https://invidious.drgns.space"
   ];
 
-  var searchSingleInstance = async function (instance: string): Promise<any[]> {
-    var url = instance + "/api/v1/search?q=" + encodeURIComponent(query + suffix) + "&type=video";
-    var controller = new AbortController();
-    var timeoutId = setTimeout(function () { controller.abort(); }, 2500);
-
-    try {
-      var response = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (!response.ok) {
-        throw new Error("Instance HTTP status " + response.status);
-      }
-      var data = await response.json();
-      if (!Array.isArray(data) || data.length === 0) {
-        throw new Error("Empty or invalid results from instance");
-      }
-
-      var results = data.map(function (item: any) {
-        return {
-          videoId: item.videoId,
-          title: cleanString(item.title || ""),
-          artist: cleanString(item.author || "YouTube Video"),
-          rawArtist: item.author,
-        };
-      }).filter(function (item: any) { return item.videoId; });
-
-      if (results.length === 0) {
-        throw new Error("No tracks with videoId found");
-      }
-
-      return filterOriginalArtistTracks(results);
-    } catch (err) {
-      clearTimeout(timeoutId);
-      throw err;
-    }
+  var searchSingleInstance = function (instance: string): Promise<any[]> {
+    return new Promise(function (resolve, reject) {
+      var url = instance + "/api/v1/search?q=" + encodeURIComponent(query + suffix) + "&type=video";
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.timeout = 3000;
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+              if (!Array.isArray(data) || data.length === 0) {
+                reject(new Error("Empty or invalid results from instance"));
+                return;
+              }
+              var results = [];
+              for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                if (item.videoId) {
+                  var secureThumb = "";
+                  if (item.videoThumbnails && item.videoThumbnails.length > 0) {
+                    var thumb = item.videoThumbnails[item.videoThumbnails.length - 1].url;
+                    if (thumb) secureThumb = thumb.replace("http://", "https://");
+                  }
+                  results.push({
+                    videoId: item.videoId,
+                    title: cleanString(item.title || ""),
+                    artist: cleanString(item.author || "YouTube Video"),
+                    rawArtist: item.author,
+                    thumbnail: secureThumb
+                  });
+                }
+              }
+              if (results.length === 0) {
+                reject(new Error("No tracks with videoId found"));
+                return;
+              }
+              resolve(filterOriginalArtistTracks(results));
+            } catch (err) {
+              reject(err);
+            }
+          } else {
+            reject(new Error("Instance HTTP status " + xhr.status));
+          }
+        }
+      };
+      xhr.onerror = function () { reject(new Error("XHR Network Error")); };
+      xhr.ontimeout = function () { reject(new Error("XHR Timeout")); };
+      xhr.send();
+    });
   };
+
+  try {
+    var apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+    if (apiKey) {
+      return await new Promise<any[]>(function (resolve, reject) {
+        var url = "https://www.googleapis.com/youtube/v3/search?part=snippet&q=" + encodeURIComponent(query + suffix) + "&type=video&videoCategoryId=10&maxResults=15&key=" + apiKey;
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              try {
+                var data = JSON.parse(xhr.responseText);
+                var results = [];
+                if (data.items && data.items.length > 0) {
+                  for (var i = 0; i < data.items.length; i++) {
+                    var item = data.items[i];
+                    var secureThumb = "";
+                    if (item.snippet && item.snippet.thumbnails && item.snippet.thumbnails.high) {
+                      secureThumb = item.snippet.thumbnails.high.url.replace("http://", "https://");
+                    }
+                    results.push({
+                      videoId: item.id.videoId,
+                      title: cleanString(item.snippet.title),
+                      artist: cleanString(item.snippet.channelTitle),
+                      rawArtist: item.snippet.channelTitle,
+                      thumbnail: secureThumb
+                    });
+                  }
+                }
+                resolve(filterOriginalArtistTracks(results));
+              } catch (e) {
+                reject(e);
+              }
+            } else {
+              reject(new Error("Official API failed"));
+            }
+          }
+        };
+        xhr.onerror = function () { reject(new Error("XHR Network Error")); };
+        xhr.send();
+      });
+    }
+  } catch (err) {
+    console.warn("Official API failed, falling back to Invidious");
+  }
 
   try {
     return await anyPromise(instances.map(function (inst) { return searchSingleInstance(inst); }));
@@ -482,12 +544,12 @@ export default function App() {
   useEffect(function () {
     var initializePlayer = function () {
       playerRef.current = new window.YT.Player("youtube-player-element", {
-        height: "200px",
+        height: "120px",
         width: "200px",
         videoId: currentTrack.videoId,
         playerVars: {
           autoplay: 0,
-          controls: 0,
+          controls: 1,
           disablekb: 1,
           fs: 0,
           rel: 0,
@@ -557,9 +619,8 @@ export default function App() {
       return;
     }
     if (isPlayerReady && playerRef.current) {
-      playerRef.current.loadVideoById(track.videoId);
-      playerRef.current.playVideo();
-      setIsPlaying(true);
+      playerRef.current.cueVideoById(track.videoId);
+      setIsPlaying(false);
     }
   };
 
@@ -955,8 +1016,8 @@ export default function App() {
           WebkitTransform: "scale(" + scale + ")"
         }}
       >
-      {/* Hidden YouTube Iframe Target */}
-      <div style={{ position: "absolute", left: "0px", top: "0px", width: "200px", height: "200px", opacity: 0.01, overflow: "hidden", pointerEvents: "none" }}>
+      {/* Hidden YouTube Iframe */}
+      <div style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "1px", height: "1px", opacity: 0.01, overflow: "hidden", pointerEvents: "none" }}>
         <div id="youtube-player-element"></div>
       </div>
 
@@ -995,7 +1056,7 @@ export default function App() {
                 var isAdded = playlist.some(function (t) { return t.videoId === track.videoId; });
                 var handlePlayClick = function () { handleSelectSearchOption(track, true); };
                 var handleQueueClick = function () { handleSelectSearchOption(track, false); };
-                var trackThumbnail = track.thumbnail ? track.thumbnail.replace("img.youtube.com", "i.ytimg.com") : "";
+                var trackThumbnail = track.thumbnail ? track.thumbnail.replace("img.youtube.com", "i.ytimg.com").replace("http://", "https://") : "";
 
                 return (
                   <div key={track.videoId + "-" + idx} className="search-result-item">
@@ -1378,7 +1439,7 @@ export default function App() {
                 var handleRemoveClick = function (e: any) {
                   handleRemoveTrack(idx, e);
                 };
-                var itemThumbnail = track.thumbnail || "";
+                var itemThumbnail = track.thumbnail ? track.thumbnail.replace("http://", "https://") : "";
 
                 return (
                   <div

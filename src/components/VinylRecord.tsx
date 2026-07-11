@@ -134,7 +134,7 @@ export function VinylRecord(props: {
     onPressEnd();
   };
 
-  var imageUrl = currentTrack.thumbnail || "";
+  var imageUrl = currentTrack.thumbnail ? currentTrack.thumbnail.replace("http://", "https://") : "";
 
   var fallbackLabelStyle = {
     width: "100%",
