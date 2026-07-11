@@ -34,7 +34,8 @@ export function VinylRecord(props: {
       : "inset 0 0 45px rgba(0,0,0,1), 0 12px 40px rgba(0,0,0,0.9)",
     WebkitBoxShadow: isPlaying
       ? "inset 0 0 45px rgba(0,0,0,1), 0 0 40px rgba(255,255,255,0.04), 0 20px 60px rgba(0,0,0,0.95)"
-      : "inset 0 0 45px rgba(0,0,0,1), 0 12px 40px rgba(0,0,0,0.9)"
+      : "inset 0 0 45px rgba(0,0,0,1), 0 12px 40px rgba(0,0,0,0.9)",
+    WebkitTapHighlightColor: "transparent"
   };
 
   var outerShadowStyle = {
@@ -157,7 +158,7 @@ export function VinylRecord(props: {
   };
 
   return (
-    <div className="flex-legacy" style={{ position: "relative", width: "420px", height: "420px", WebkitBoxPack: "center", WebkitJustifyContent: "center", justifyContent: "center", WebkitBoxAlign: "center", WebkitAlignItems: "center", alignItems: "center", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }}>
+    <div className="flex-legacy" style={{ position: "relative", width: "420px", height: "420px", WebkitBoxPack: "center", WebkitJustifyContent: "center", justifyContent: "center", WebkitBoxAlign: "center", WebkitAlignItems: "center", alignItems: "center", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTapHighlightColor: "transparent" }}>
       <div style={outerShadowStyle} />
 
       <div
