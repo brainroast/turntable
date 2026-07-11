@@ -98,12 +98,41 @@ export function VinylRecord(props: {
     color: "#666666"
   };
 
-  var handlePointerDown = function (e: React.PointerEvent) {
-    e.preventDefault();
+  var imgErrorState = React.useState(false);
+  var hasImgError = imgErrorState[0];
+  var setHasImgError = imgErrorState[1];
+
+  React.useEffect(function () {
+    setHasImgError(false);
+  }, [currentTrack.videoId]);
+
+  var getInitials = function () {
+    if (!currentTrack || !currentTrack.title) return "🎵";
+    var title = currentTrack.title.trim();
+    if (!title || title === "No Track Playing" || title === "Unknown Title") return "🎵";
+    var parts = title.split(/[\s\-]+/);
+    var res = "";
+    for (var i = 0; i < parts.length && res.length < 2; i++) {
+      var p = parts[i].trim();
+      if (p) {
+        var char = p.charAt(0);
+        if (char) res += char.toUpperCase();
+      }
+    }
+    return res || "🎵";
+  };
+
+  var handlePressStart = function (e: any) {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
     onPressStart();
   };
 
-  var handlePointerUp = function () {
+  var handlePressEnd = function (e: any) {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
     onPressEnd();
   };
 
@@ -111,39 +140,78 @@ export function VinylRecord(props: {
     ? currentTrack.thumbnail.replace("img.youtube.com", "i.ytimg.com")
     : "";
 
+  var fallbackLabelStyle = {
+    width: "100%",
+    height: "100%",
+    borderRadius: "50%",
+    background: "radial-gradient(circle, #221c16 0%, #130f0c 70%, #000000 100%)",
+    border: "2px solid #d97706",
+    display: "flex",
+    flexDirection: "column" as "column",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative" as "relative",
+    color: "#fbbf24",
+    padding: "8px",
+    textAlign: "center" as "center",
+    boxSizing: "border-box" as "border-box",
+    WebkitTouchCallout: "none" as "none",
+    WebkitUserSelect: "none" as "none",
+    userSelect: "none" as "none"
+  };
+
   return (
-    <div className="flex-legacy" style={{ position: "relative", width: "420px", height: "420px", WebkitBoxPack: "center", WebkitJustifyContent: "center", justifyContent: "center", WebkitBoxAlign: "center", WebkitAlignItems: "center", alignItems: "center" }}>
+    <div className="flex-legacy" style={{ position: "relative", width: "420px", height: "420px", WebkitBoxPack: "center", WebkitJustifyContent: "center", justifyContent: "center", WebkitBoxAlign: "center", WebkitAlignItems: "center", alignItems: "center", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }}>
       <div style={outerShadowStyle} />
 
       <div
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onPointerCancel={handlePointerUp}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
+        onTouchCancel={handlePressEnd}
+        onMouseDown={handlePressStart}
+        onMouseUp={handlePressEnd}
+        onMouseLeave={handlePressEnd}
         className="flex-legacy"
-        style={rotationStyle}
+        style={{
+          ...rotationStyle,
+          WebkitTouchCallout: "none",
+          WebkitUserSelect: "none",
+          userSelect: "none"
+        }}
         title="TEKAN DAN TAHAN UNTUK MEMUTAR"
       >
         <div style={shineStyle} />
 
-        <div style={centerLabelStyle}>
-          {imageUrl ? (
-            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        <div style={{ ...centerLabelStyle, WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }}>
+          {imageUrl && !hasImgError ? (
+            <div style={{ position: "relative", width: "100%", height: "100%", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }}>
               <img
                 src={imageUrl}
                 alt=""
-                style={imageStyle}
-                onError={function (e) {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
+                draggable="false"
+                style={{
+                  ...imageStyle,
+                  pointerEvents: "none",
+                  WebkitUserSelect: "none",
+                  userSelect: "none",
+                  WebkitTouchCallout: "none"
+                }}
+                onError={function () {
+                  setHasImgError(true);
                 }}
               />
               <div style={{ position: "absolute", left: "0px", top: "0px", width: "100%", height: "100%", borderRadius: "50%", border: "2px solid rgba(245, 158, 11, 0.2)", pointerEvents: "none" }} />
               <div style={{ position: "absolute", left: "0px", top: "0px", width: "100%", height: "100%", borderRadius: "50%", background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15) 0%, transparent 60%)", pointerEvents: "none" }} />
             </div>
           ) : (
-            <div className="flex-legacy" style={emptyArtStyle}>
-              <span style={emptyTextStyle}>NO ART</span>
+            <div style={fallbackLabelStyle}>
+              <div style={{ position: "absolute", left: "0px", top: "0px", width: "100%", height: "100%", borderRadius: "50%", border: "1px dashed rgba(251, 191, 36, 0.2)", pointerEvents: "none" }} />
+              <span style={{ fontSize: "28px", fontWeight: "bold", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "1.5px", color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
+                {getInitials()}
+              </span>
+              <span style={{ fontSize: "7px", fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "1px", color: "rgba(251, 191, 36, 0.6)", marginTop: "2px", maxWidth: "85%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {currentTrack.artist || "TRACK"}
+              </span>
             </div>
           )}
         </div>

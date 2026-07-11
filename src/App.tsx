@@ -423,6 +423,31 @@ export default function App() {
   var isNumbers = isNumbersState[0];
   var setIsNumbers = isNumbersState[1];
 
+  var scaleState = useState(1);
+  var scale = scaleState[0];
+  var setScale = scaleState[1];
+
+  useEffect(function () {
+    var updateScale = function () {
+      var baseWidth = 768;
+      var baseHeight = 1024;
+      var w = window.innerWidth;
+      var h = window.innerHeight;
+      var scaleX = w / baseWidth;
+      var scaleY = h / baseHeight;
+      var newScale = Math.min(scaleX, scaleY);
+      setScale(newScale);
+    };
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    window.addEventListener("orientationchange", updateScale);
+    return function () {
+      window.removeEventListener("resize", updateScale);
+      window.removeEventListener("orientationchange", updateScale);
+    };
+  }, []);
+
   var searchOptionsState = useState<Track[]>([]);
   var searchOptions = searchOptionsState[0];
   var setSearchOptions = searchOptionsState[1];
@@ -915,9 +940,16 @@ export default function App() {
     : ["Z", "X", "C", "V", "B", "N", "M"];
 
   return (
-    <div className="app-wrapper">
+    <div className="app-scale-container">
+      <div 
+        className="app-wrapper"
+        style={{
+          transform: "scale(" + scale + ")",
+          WebkitTransform: "scale(" + scale + ")"
+        }}
+      >
       {/* Hidden YouTube Iframe Target */}
-      <div style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "200px", height: "200px", opacity: 0.01, overflow: "hidden" }}>
+      <div style={{ position: "absolute", left: "0px", top: "0px", width: "1px", height: "1px", opacity: 0.001, overflow: "hidden", pointerEvents: "none", zIndex: -10 }}>
         <div id="youtube-player-element"></div>
       </div>
 
@@ -1412,5 +1444,6 @@ export default function App() {
 
       </div>
     </div>
+  </div>
   );
 }
