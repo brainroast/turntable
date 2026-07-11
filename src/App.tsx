@@ -1212,14 +1212,6 @@ export default function App() {
               <div className="metadata-container">
                 <h1 className="metadata-title">{currentTrack.title}</h1>
                 <p className="metadata-artist">{currentTrack.artist}</p>
-
-                <button
-                  onClick={function () { setShowQueue(!showQueue); }}
-                  className={"queue-toggle-btn" + (showQueue ? " active" : "")}
-                  title="Show Playlist"
-                >
-                  <ListMusic style={{ width: "18px", height: "18px" }} />
-                </button>
               </div>
 
               {/* Timing info */}
@@ -1241,27 +1233,11 @@ export default function App() {
                   <SkipBack style={{ width: "20px", height: "20px" }} />
                 </button>
 
-                {/* Play/Pause Button */}
-                <button
-                  onClick={handlePlayPause}
-                  className="playback-btn"
-                  disabled={!isPlayerReady}
-                  style={{ left: "50px", backgroundColor: "#ffffff", color: "#000000", borderRadius: "50%", width: "44px", height: "44px", top: "-2px" }}
-                  title={isPlaying ? "Pause" : "Play"}
-                >
-                  {isPlaying ? (
-                    <Pause style={{ width: "18px", height: "18px" }} />
-                  ) : (
-                    <Play style={{ width: "18px", height: "18px", marginLeft: "2px" }} />
-                  )}
-                </button>
-
                 {/* Next button */}
                 <button
                   onClick={handleNext}
                   className="playback-btn playback-btn-next"
                   disabled={!isPlayerReady}
-                  style={{ left: "105px" }}
                   title="Next"
                 >
                   <SkipForward style={{ width: "20px", height: "20px" }} />
@@ -1271,7 +1247,6 @@ export default function App() {
                 <button
                   onClick={function () { setIsShuffle(!isShuffle); }}
                   className={"playback-btn playback-btn-shuffle" + (isShuffle ? " active" : "")}
-                  style={{ left: "165px" }}
                   title="Shuffle"
                 >
                   <Shuffle style={{ width: "14px", height: "14px" }} />
@@ -1282,32 +1257,21 @@ export default function App() {
                 <button
                   onClick={function () { setIsRepeat(!isRepeat); }}
                   className={"playback-btn playback-btn-repeat" + (isRepeat ? " active" : "")}
-                  style={{ left: "215px" }}
                   title="Repeat"
                 >
                   <Repeat style={{ width: "14px", height: "14px" }} />
                   {isRepeat ? <span className="dot-indicator" /> : null}
                 </button>
 
-                {/* Mute and volume slider */}
-                <div className="volume-group" style={{ left: "270px" }}>
-                  <button
-                    onClick={handleMuteToggle}
-                    className="playback-btn"
-                    style={{ position: "relative", width: "30px", height: "30px" }}
-                    title={isMuted ? "Unmute" : "Mute"}
-                  >
-                    {isMuted ? <VolumeX style={{ width: "16px", height: "16px" }} /> : <Volume2 style={{ width: "16px", height: "16px" }} />}
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={volume}
-                    onChange={handleVolumeChange}
-                    className="volume-slider"
-                  />
-                </div>
+                {/* Playlist toggle button */}
+                <button
+                  onClick={function () { setShowQueue(!showQueue); }}
+                  className={"playback-btn playback-btn-playlist" + (showQueue ? " active" : "")}
+                  title="Show Playlist"
+                >
+                  <ListMusic style={{ width: "15px", height: "15px" }} />
+                  {showQueue ? <span className="dot-indicator" /> : null}
+                </button>
               </div>
 
             </div>

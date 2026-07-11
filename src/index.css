@@ -122,10 +122,10 @@ body, html {
 /* Vinyl Panel (Right column in Bottom area) */
 .vinyl-panel-right {
   position: absolute;
-  left: 405px;
-  top: 35px;
-  width: 326px;
-  height: 440px;
+  left: 310px;
+  top: 46px;
+  width: 420px;
+  height: 420px;
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
@@ -205,7 +205,7 @@ body, html {
 .metadata-container {
   position: absolute;
   left: 0px;
-  top: 75px;
+  top: 50px;
   width: 340px;
   height: 140px;
 }
@@ -268,7 +268,7 @@ body, html {
 .time-display-container {
   position: absolute;
   left: 0px;
-  top: 235px;
+  top: 335px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   color: rgba(255, 255, 255, 0.35);
@@ -280,9 +280,16 @@ body, html {
 .playback-button-row {
   position: absolute;
   left: 0px;
-  top: 265px;
+  top: 375px;
   width: 340px;
   height: 50px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 16px;
 }
 
 .playback-btn {
@@ -290,7 +297,6 @@ body, html {
   border: none;
   color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
-  position: absolute;
   height: 40px;
   width: 40px;
   display: -webkit-box;
@@ -302,17 +308,20 @@ body, html {
   -webkit-box-pack: center;
   -webkit-justify-content: center;
   justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.playback-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
 }
 
 .playback-btn:active {
   color: #ffffff;
 }
 
-.playback-btn-prev { left: 0px; }
-.playback-btn-next { left: 50px; }
-
 .playback-btn-shuffle {
-  left: 110px;
   color: rgba(255, 255, 255, 0.15);
 }
 .playback-btn-shuffle.active {
@@ -320,7 +329,7 @@ body, html {
 }
 .dot-indicator {
   position: absolute;
-  bottom: -4px;
+  bottom: 2px;
   width: 4px;
   height: 4px;
   background-color: #ffffff;
@@ -328,10 +337,16 @@ body, html {
 }
 
 .playback-btn-repeat {
-  left: 160px;
   color: rgba(255, 255, 255, 0.15);
 }
 .playback-btn-repeat.active {
+  color: #ffffff;
+}
+
+.playback-btn-playlist {
+  color: rgba(255, 255, 255, 0.15);
+}
+.playback-btn-playlist.active {
   color: #ffffff;
 }
 

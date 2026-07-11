@@ -14,8 +14,8 @@ export function VinylRecord(props: {
 
   var rotationStyle = {
     position: "relative" as "relative",
-    width: "290px",
-    height: "290px",
+    width: "410px",
+    height: "410px",
     borderRadius: "50%",
     border: "1px solid rgba(255,255,255,0.05)",
     WebkitBoxPack: "center" as "center",
@@ -39,8 +39,8 @@ export function VinylRecord(props: {
 
   var outerShadowStyle = {
     position: "absolute" as "absolute",
-    width: "310px",
-    height: "310px",
+    width: "420px",
+    height: "420px",
     borderRadius: "50%",
     backgroundColor: "rgba(0,0,0,0.8)",
     filter: "blur(20px)",
@@ -50,8 +50,8 @@ export function VinylRecord(props: {
 
   var centerLabelStyle = {
     position: "absolute" as "absolute",
-    width: "140px",
-    height: "140px",
+    width: "180px",
+    height: "180px",
     borderRadius: "50%",
     backgroundColor: "#050505",
     border: "4px solid #141414",
@@ -112,7 +112,7 @@ export function VinylRecord(props: {
     : "";
 
   return (
-    <div className="flex-legacy" style={{ position: "relative", width: "320px", height: "320px", WebkitBoxPack: "center", WebkitJustifyContent: "center", justifyContent: "center", WebkitBoxAlign: "center", WebkitAlignItems: "center", alignItems: "center" }}>
+    <div className="flex-legacy" style={{ position: "relative", width: "420px", height: "420px", WebkitBoxPack: "center", WebkitJustifyContent: "center", justifyContent: "center", WebkitBoxAlign: "center", WebkitAlignItems: "center", alignItems: "center" }}>
       <div style={outerShadowStyle} />
 
       <div
