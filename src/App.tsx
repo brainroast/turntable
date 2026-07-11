@@ -306,31 +306,31 @@ var DEFAULT_PLAYLIST: Track[] = [
     videoId: "8GW6sLrK40k",
     title: "Resonance",
     artist: "HOME",
-    thumbnail: "https://i.ytimg.com/vi/8GW6sLrK40k/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/8GW6sLrK40k/hqdefault.jpg",
   },
   {
     videoId: "UfcAVejsrU4",
     title: "Weightless",
     artist: "Marconi Union",
-    thumbnail: "https://i.ytimg.com/vi/UfcAVejsrU4/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/UfcAVejsrU4/hqdefault.jpg",
   },
   {
     videoId: "S-Xm7s9eGxU",
     title: "Gymnopédie No. 1",
     artist: "Erik Satie",
-    thumbnail: "https://i.ytimg.com/vi/S-Xm7s9eGxU/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/S-Xm7s9eGxU/hqdefault.jpg",
   },
   {
     videoId: "hhnZkNj764I",
     title: "Intro",
     artist: "The xx",
-    thumbnail: "https://i.ytimg.com/vi/hhnZkNj764I/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/hhnZkNj764I/hqdefault.jpg",
   },
   {
     videoId: "24C7_m9X_h0",
     title: "Snowman",
     artist: "WYS",
-    thumbnail: "https://i.ytimg.com/vi/24C7_m9X_h0/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/24C7_m9X_h0/hqdefault.jpg",
   },
 ];
 
@@ -544,27 +544,24 @@ export default function App() {
     };
   }, []);
 
-  // Sync state when track changes
-  useEffect(function () {
-    if (isPlayerReady && playerRef.current && currentTrack.videoId) {
-      playerRef.current.cueVideoById({
-        videoId: currentTrack.videoId,
-        startSeconds: 0,
-      });
-      setCurrentTime(0);
-      setDuration(0);
-      if (isPlaying) {
-        playerRef.current.playVideo();
-      }
-    } else if (isPlayerReady && playerRef.current && !currentTrack.videoId) {
-      if (typeof playerRef.current.stopVideo === "function") {
+  // Remove the useEffect that cues video to avoid fighting with direct loadVideoById calls
+  
+  var playVideoTrack = function (track: Track | undefined) {
+    setCurrentTime(0);
+    setDuration(0);
+    if (!track || !track.videoId) {
+      if (isPlayerReady && playerRef.current && typeof playerRef.current.stopVideo === "function") {
         playerRef.current.stopVideo();
       }
       setIsPlaying(false);
-      setCurrentTime(0);
-      setDuration(0);
+      return;
     }
-  }, [currentTrack.videoId, isPlayerReady]);
+    if (isPlayerReady && playerRef.current) {
+      playerRef.current.loadVideoById(track.videoId);
+      playerRef.current.playVideo();
+      setIsPlaying(true);
+    }
+  };
 
   // Handle time update intervals
   useEffect(function () {
@@ -626,12 +623,14 @@ export default function App() {
 
   var handleNext = function () {
     if (playlist.length === 0) return;
+    var nextIdx = 0;
     if (isShuffle) {
-      var randomIndex = Math.floor(Math.random() * playlist.length);
-      setCurrentTrackIndex(randomIndex);
+      nextIdx = Math.floor(Math.random() * playlist.length);
     } else {
-      setCurrentTrackIndex(function (prev) { return (prev + 1) % playlist.length; });
+      nextIdx = (currentTrackIndex + 1) % playlist.length;
     }
+    setCurrentTrackIndex(nextIdx);
+    playVideoTrack(playlist[nextIdx]);
   };
 
   var handlePrev = function () {
@@ -640,12 +639,14 @@ export default function App() {
       if (playerRef.current) playerRef.current.seekTo(0);
       setCurrentTime(0);
     } else {
+      var prevIdx = 0;
       if (isShuffle) {
-        var randomIndex = Math.floor(Math.random() * playlist.length);
-        setCurrentTrackIndex(randomIndex);
+        prevIdx = Math.floor(Math.random() * playlist.length);
       } else {
-        setCurrentTrackIndex(function (prev) { return (prev - 1 + playlist.length) % playlist.length; });
+        prevIdx = (currentTrackIndex - 1 + playlist.length) % playlist.length;
       }
+      setCurrentTrackIndex(prevIdx);
+      playVideoTrack(playlist[prevIdx]);
     }
   };
 
@@ -839,7 +840,7 @@ export default function App() {
             videoId: t.videoId,
             title: t.title || "Unknown Title",
             artist: t.artist || "Unknown Artist",
-            thumbnail: "https://i.ytimg.com/vi/" + t.videoId + "/hqdefault.jpg",
+            thumbnail: "https://img.youtube.com/vi/" + t.videoId + "/hqdefault.jpg",
           };
         });
         setSearchOptions(tracks);
@@ -861,6 +862,9 @@ export default function App() {
   };
 
   var handleSelectSearchOption = function (track: Track, andPlay: boolean) {
+    if (andPlay) {
+      playVideoTrack(track);
+    }
     setPlaylist(function (prev) {
       var alreadyExists = prev.some(function (t) { return t.videoId === track.videoId; });
       if (alreadyExists) {
@@ -868,7 +872,6 @@ export default function App() {
           var existingIdx = prev.findIndex(function (t) { return t.videoId === track.videoId; });
           if (existingIdx !== -1) {
             setCurrentTrackIndex(existingIdx);
-            setIsPlaying(true);
           }
         }
         return prev;
@@ -877,7 +880,6 @@ export default function App() {
       var updated = prev.concat(track);
       if (andPlay) {
         setCurrentTrackIndex(updated.length - 1);
-        setIsPlaying(true);
       }
       return updated;
     });
@@ -944,12 +946,17 @@ export default function App() {
       <div 
         className="app-wrapper"
         style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          marginLeft: "-384px",
+          marginTop: "-512px",
           transform: "scale(" + scale + ")",
           WebkitTransform: "scale(" + scale + ")"
         }}
       >
       {/* Hidden YouTube Iframe Target */}
-      <div style={{ position: "absolute", left: "0px", top: "0px", width: "1px", height: "1px", opacity: 0.001, overflow: "hidden", pointerEvents: "none", zIndex: -10 }}>
+      <div style={{ position: "absolute", left: "0px", top: "0px", width: "200px", height: "200px", opacity: 0.001, overflow: "hidden", pointerEvents: "none", zIndex: -10 }}>
         <div id="youtube-player-element"></div>
       </div>
 
@@ -1366,12 +1373,12 @@ export default function App() {
                 var handleItemClick = function () {
                   setCurrentTrackIndex(idx);
                   setShowQueue(false);
-                  setIsPlaying(true);
+                  playVideoTrack(track);
                 };
                 var handleRemoveClick = function (e: any) {
                   handleRemoveTrack(idx, e);
                 };
-                var itemThumbnail = track.thumbnail ? track.thumbnail.replace("img.youtube.com", "i.ytimg.com") : "";
+                var itemThumbnail = track.thumbnail || "";
 
                 return (
                   <div
