@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, FormEvent, MouseEvent, ChangeEvent } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Play,
   Pause,
@@ -38,13 +38,11 @@ function cleanString(str: string): string {
 }
 
 function filterOriginalArtistTracks(results: any[]): any[] {
-  // Tier 1: Strict original artist check
-  const strictResults = results.filter(r => {
-    const t = r.title.toLowerCase();
-    const a = (r.rawArtist || r.artist || "").toLowerCase();
+  var strictResults = results.filter(function (r) {
+    var t = r.title.toLowerCase();
+    var a = (r.rawArtist || r.artist || "").toLowerCase();
 
-    // Blacklist check on title
-    const titleBlacklist = [
+    var titleBlacklist = [
       "cover", "remix", "tribute", "karaoke", "instrumental", "reaction",
       "fanmade", "fan-made", "mashup", "parody", "tutorial", "how to play",
       "choreography", "dance cover", "1 hour", "1hour", "looped", "slowed",
@@ -54,26 +52,25 @@ function filterOriginalArtistTracks(results: any[]): any[] {
       "speed up", "sped up", "slow down", "slowed down", "10 hours",
       "10hours", "loop", "synthesia", "chiptune", "8-bit", "8bit", "vlog background"
     ];
-    if (titleBlacklist.some(term => t.includes(term))) return false;
+    if (titleBlacklist.some(function (term) { return t.indexOf(term) !== -1; })) return false;
 
-    // Blacklist check on channel name
-    const channelBlacklist = [
+    var channelBlacklist = [
       "lyrics", "lyric", "subtitles", "nightcore", "covers", "karaoke",
       "promotions", "chilled", "vibes", "trap", "nation", "bass boosted",
       "repost", "reloaded", "synthesia", "tutorial"
     ];
-    if (channelBlacklist.some(term => a.includes(term))) return false;
+    if (channelBlacklist.some(function (term) { return a.indexOf(term) !== -1; })) return false;
 
-    const isOfficialSource =
-      a.endsWith(" - topic") ||
-      a.includes("vevo") ||
-      a.includes("official") ||
-      a.includes("records") ||
-      a.includes("music label") ||
-      a.includes("music group") ||
-      a.includes("label") ||
-      t.includes("official") ||
-      t.includes("original");
+    var isOfficialSource =
+      a.indexOf(" - topic") !== -1 ||
+      a.indexOf("vevo") !== -1 ||
+      a.indexOf("official") !== -1 ||
+      a.indexOf("records") !== -1 ||
+      a.indexOf("music label") !== -1 ||
+      a.indexOf("music group") !== -1 ||
+      a.indexOf("label") !== -1 ||
+      t.indexOf("official") !== -1 ||
+      t.indexOf("original") !== -1;
 
     return isOfficialSource;
   });
@@ -82,12 +79,11 @@ function filterOriginalArtistTracks(results: any[]): any[] {
     return strictResults.slice(0, 15);
   }
 
-  // Tier 2: Moderately relaxed check
-  const relaxedResults = results.filter(r => {
-    const t = r.title.toLowerCase();
-    const a = (r.rawArtist || r.artist || "").toLowerCase();
+  var relaxedResults = results.filter(function (r) {
+    var t = r.title.toLowerCase();
+    var a = (r.rawArtist || r.artist || "").toLowerCase();
 
-    const titleBlacklist = [
+    var titleBlacklist = [
       "cover", "remix", "tribute", "karaoke", "instrumental", "reaction",
       "fanmade", "fan-made", "mashup", "parody", "tutorial", "how to play",
       "choreography", "dance cover", "1 hour", "1hour", "looped", "slowed",
@@ -96,22 +92,23 @@ function filterOriginalArtistTracks(results: any[]): any[] {
       "8d audio", "8d version", "earrape", "bass boosted", "mash-up",
       "speed up", "sped up", "slow down", "slowed down"
     ];
-    if (titleBlacklist.some(term => t.includes(term))) return false;
+    if (titleBlacklist.some(function (term) { return t.indexOf(term) !== -1; })) return false;
 
-    const channelBlacklist = [
+    var channelBlacklist = [
       "covers", "karaoke", "nightcore", "repost", "reloaded", "synthesia"
     ];
-    if (channelBlacklist.some(term => a.includes(term))) return false;
+    if (channelBlacklist.some(function (term) { return a.indexOf(term) !== -1; })) return false;
 
     return true;
   });
 
-  const combined = [...strictResults];
-  const seenIds = new Set(combined.map(r => r.videoId));
+  var combined = [].concat(strictResults as any);
+  var seenIds = new Set(combined.map(function (r: any) { return r.videoId; }));
 
-  for (const r of relaxedResults) {
+  for (var i = 0; i < relaxedResults.length; i++) {
+    var r = relaxedResults[i];
     if (!seenIds.has(r.videoId)) {
-      combined.push(r);
+      combined.push(r as never);
       seenIds.add(r.videoId);
     }
   }
@@ -124,36 +121,37 @@ function filterOriginalArtistTracks(results: any[]): any[] {
 }
 
 async function originalScraperFallback(query: string, mode: "song" | "artist" = "song"): Promise<any[]> {
-  const suffix = mode === "artist" ? " greatest hits" : " official release";
-  const targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + suffix)}&sp=EgIQAQ%253D%253D`;
+  var suffix = mode === "artist" ? " greatest hits" : " official release";
+  var targetUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query + suffix) + "&sp=EgIQAQ%253D%253D";
   
-  // CORS-bypassing proxies
-  const proxies = [
-    (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+  var proxies = [
+    function (url: string) { return "https://api.allorigins.win/raw?url=" + encodeURIComponent(url); },
+    function (url: string) { return "https://corsproxy.io/?" + encodeURIComponent(url); }
   ];
 
-  let lastError: any = null;
-  for (const proxyFn of proxies) {
+  var lastError = null;
+  for (var i = 0; i < proxies.length; i++) {
+    var proxyFn = proxies[i];
     try {
-      const proxyUrl = proxyFn(targetUrl);
-      const response = await fetch(proxyUrl);
+      var proxyUrl = proxyUrl = proxyFn(targetUrl);
+      var response = await fetch(proxyUrl);
       if (!response.ok) {
-        throw new Error(`Proxy status ${response.status}`);
+        throw new Error("Proxy status " + response.status);
       }
-      const html = await response.text();
+      var html = await response.text();
       
-      let rawJson: string | null = null;
-      const startPatterns = ["ytInitialData = ", "ytInitialData="];
-      for (const pattern of startPatterns) {
-        const idx = html.indexOf(pattern);
+      var rawJson = null;
+      var startPatterns = ["ytInitialData = ", "ytInitialData="];
+      for (var j = 0; j < startPatterns.length; j++) {
+        var pattern = startPatterns[j];
+        var idx = html.indexOf(pattern);
         if (idx !== -1) {
-          const rawDataStart = html.substring(idx + pattern.length);
-          const endKeyword = ";</script>";
-          const endIndex = rawDataStart.indexOf(endKeyword);
+          var rawDataStart = html.substring(idx + pattern.length);
+          var endKeyword = ";</script>";
+          var endIndex = rawDataStart.indexOf(endKeyword);
           if (endIndex !== -1) {
             rawJson = rawDataStart.substring(0, endIndex).trim();
-            if (rawJson.endsWith(";")) {
+            if (rawJson.slice(-1) === ";") {
               rawJson = rawJson.slice(0, -1);
             }
             break;
@@ -162,23 +160,25 @@ async function originalScraperFallback(query: string, mode: "song" | "artist" = 
       }
 
       if (rawJson) {
-        const data = JSON.parse(rawJson);
-        const contents = data?.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents;
+        var data = JSON.parse(rawJson);
+        var contents = data && data.contents && data.contents.twoColumnSearchResultsRenderer && data.contents.twoColumnSearchResultsRenderer.primaryContents && data.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer && data.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents;
         if (contents && Array.isArray(contents)) {
-          const results: any[] = [];
-          for (const section of contents) {
-            const items = section?.itemSectionRenderer?.contents;
+          var results = [];
+          for (var k = 0; k < contents.length; k++) {
+            var section = contents[k];
+            var items = section && section.itemSectionRenderer && section.itemSectionRenderer.contents;
             if (items && Array.isArray(items)) {
-              for (const item of items) {
-                if (item?.videoRenderer) {
-                  const vr = item.videoRenderer;
-                  const videoId = vr.videoId;
-                  const title = vr.title?.runs?.[0]?.text || "Unknown Title";
-                  const artist = vr.ownerText?.runs?.[0]?.text || "YouTube Music";
+              for (var m = 0; m < items.length; m++) {
+                var item = items[m];
+                if (item && item.videoRenderer) {
+                  var vr = item.videoRenderer;
+                  var videoId = vr.videoId;
+                  var title = vr.title && vr.title.runs && vr.title.runs[0] && vr.title.runs[0].text || "Unknown Title";
+                  var artist = vr.ownerText && vr.ownerText.runs && vr.ownerText.runs[0] && vr.ownerText.runs[0].text || "YouTube Music";
 
                   if (videoId) {
                     results.push({
-                      videoId,
+                      videoId: videoId,
                       title: cleanString(title),
                       artist: cleanString(artist),
                       rawArtist: artist,
@@ -197,12 +197,11 @@ async function originalScraperFallback(query: string, mode: "song" | "artist" = 
         }
       }
 
-      // Backup Regex Parser
-      const videoIdMatch = html.match(/"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"/);
+      var videoIdMatch = html.match(/"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"/);
       if (videoIdMatch && videoIdMatch[1]) {
-        const videoId = videoIdMatch[1];
+        var scrapedVideoId = videoIdMatch[1];
         return [{
-          videoId,
+          videoId: scrapedVideoId,
           title: query,
           artist: "YouTube Video",
         }];
@@ -218,18 +217,18 @@ async function originalScraperFallback(query: string, mode: "song" | "artist" = 
   throw lastError || new Error("All proxy scraper attempts failed");
 }
 
-async function anyPromise<T>(promises: Promise<T>[]): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    let rejectedCount = 0;
-    const errors: any[] = [];
+function anyPromise<T>(promises: Promise<T>[]): Promise<T> {
+  return new Promise<T>(function (resolve, reject) {
+    var rejectedCount = 0;
+    var errors: any[] = [];
     if (promises.length === 0) {
       reject(new Error("No promises provided"));
       return;
     }
-    promises.forEach((p) => {
+    promises.forEach(function (p) {
       Promise.resolve(p).then(
-        (val) => resolve(val),
-        (err) => {
+        function (val) { resolve(val); },
+        function (err) {
           rejectedCount++;
           errors.push(err);
           if (rejectedCount === promises.length) {
@@ -242,9 +241,8 @@ async function anyPromise<T>(promises: Promise<T>[]): Promise<T> {
 }
 
 async function clientSideSearchYoutube(query: string, mode: "song" | "artist" = "song"): Promise<any[]> {
-  const suffix = mode === "artist" ? " greatest hits" : " official release";
-  // Collection of fast and open public Invidious instances with CORS enabled
-  const instances = [
+  var suffix = mode === "artist" ? " greatest hits" : " official release";
+  var instances = [
     "https://invidious.privacydev.net",
     "https://inv.tux.im",
     "https://yewtu.be",
@@ -259,28 +257,30 @@ async function clientSideSearchYoutube(query: string, mode: "song" | "artist" = 
     "https://invidious.drgns.space"
   ];
 
-  const searchSingleInstance = async (instance: string): Promise<any[]> => {
-    const url = `${instance}/api/v1/search?q=${encodeURIComponent(query + suffix)}&type=video`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500); // Super fast 2.5s cutoff to filter out slow nodes
+  var searchSingleInstance = async function (instance: string): Promise<any[]> {
+    var url = instance + "/api/v1/search?q=" + encodeURIComponent(query + suffix) + "&type=video";
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, 2500);
 
     try {
-      const response = await fetch(url, { signal: controller.signal });
+      var response = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (!response.ok) {
-        throw new Error(`Instance HTTP status ${response.status}`);
+        throw new Error("Instance HTTP status " + response.status);
       }
-      const data = await response.json();
+      var data = await response.json();
       if (!Array.isArray(data) || data.length === 0) {
         throw new Error("Empty or invalid results from instance");
       }
 
-      const results = data.map((item: any) => ({
-        videoId: item.videoId,
-        title: cleanString(item.title || ""),
-        artist: cleanString(item.author || "YouTube Video"),
-        rawArtist: item.author,
-      })).filter((item: any) => item.videoId);
+      var results = data.map(function (item: any) {
+        return {
+          videoId: item.videoId,
+          title: cleanString(item.title || ""),
+          artist: cleanString(item.author || "YouTube Video"),
+          rawArtist: item.author,
+        };
+      }).filter(function (item: any) { return item.videoId; });
 
       if (results.length === 0) {
         throw new Error("No tracks with videoId found");
@@ -294,15 +294,14 @@ async function clientSideSearchYoutube(query: string, mode: "song" | "artist" = 
   };
 
   try {
-    // Race ALL instances in parallel! Whichever healthy node is fastest wins instantly (under 500ms usually)
-    return await anyPromise(instances.map(inst => searchSingleInstance(inst)));
+    return await anyPromise(instances.map(function (inst) { return searchSingleInstance(inst); }));
   } catch (err) {
     console.warn("All parallel Invidious searches failed. Running HTML scraper fallback...", err);
     return await originalScraperFallback(query, mode);
   }
 }
 
-const DEFAULT_PLAYLIST: Track[] = [
+var DEFAULT_PLAYLIST: Track[] = [
   {
     videoId: "8GW6sLrK40k",
     title: "Resonance",
@@ -335,7 +334,7 @@ const DEFAULT_PLAYLIST: Track[] = [
   },
 ];
 
-const SUGGESTED_QUERIES = [
+var SUGGESTED_QUERIES = [
   "HOME Resonance",
   "WYS Snowman",
   "Lofi Chill Beats",
@@ -349,74 +348,104 @@ const SUGGESTED_QUERIES = [
 ];
 
 export default function App() {
-  const [playlist, setPlaylist] = useState<Track[]>(DEFAULT_PLAYLIST);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const currentTrack = playlist[currentTrackIndex] || {
+  var playlistState = useState<Track[]>(DEFAULT_PLAYLIST);
+  var playlist = playlistState[0];
+  var setPlaylist = playlistState[1];
+
+  var currentTrackIndexState = useState(0);
+  var currentTrackIndex = currentTrackIndexState[0];
+  var setCurrentTrackIndex = currentTrackIndexState[1];
+
+  var currentTrack = playlist[currentTrackIndex] || {
     videoId: "",
     title: "No Track Playing",
     artist: "Empty Queue",
     thumbnail: "",
   };
 
-  const handleRemoveTrack = (idxToRemove: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setPlaylist((prev) => {
-      const updated = prev.filter((_, idx) => idx !== idxToRemove);
-      if (idxToRemove === currentTrackIndex) {
-        const newIndex = Math.min(idxToRemove, Math.max(0, updated.length - 1));
-        setCurrentTrackIndex(newIndex);
-      } else if (idxToRemove < currentTrackIndex) {
-        setCurrentTrackIndex(currentTrackIndex - 1);
-      }
-      return updated;
-    });
-  };
+  var isPlayingState = useState(false);
+  var isPlaying = isPlayingState[0];
+  var setIsPlaying = isPlayingState[1];
 
-  const handleClearPlaylist = () => {
-    setPlaylist([]);
-    setCurrentTrackIndex(0);
-    setIsPlaying(false);
-  };
+  var currentTimeState = useState(0);
+  var currentTime = currentTimeState[0];
+  var setCurrentTime = currentTimeState[1];
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(80);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isShuffle, setIsShuffle] = useState(false);
-  const [isRepeat, setIsRepeat] = useState(false);
+  var durationState = useState(0);
+  var duration = durationState[0];
+  var setDuration = durationState[1];
 
-  // UI state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchMode, setSearchMode] = useState<"song" | "artist">("song");
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState("");
-  const [showQueue, setShowQueue] = useState(false);
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
-  const [isKeyboardActive, setIsKeyboardActive] = useState(false);
-  const [isNumbers, setIsNumbers] = useState(false);
-  const [searchOptions, setSearchOptions] = useState<Track[]>([]);
+  var volumeState = useState(80);
+  var volume = volumeState[0];
+  var setVolume = volumeState[1];
 
-  const playerRef = useRef<any>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const mainSearchInputRef = useRef<HTMLInputElement>(null);
+  var isMutedState = useState(false);
+  var isMuted = isMutedState[0];
+  var setIsMuted = isMutedState[1];
 
-  const isFirstMountRef = useRef(true);
+  var isShuffleState = useState(false);
+  var isShuffle = isShuffleState[0];
+  var setIsShuffle = isShuffleState[1];
+
+  var isRepeatState = useState(false);
+  var isRepeat = isRepeatState[0];
+  var setIsRepeat = isRepeatState[1];
+
+  var searchQueryState = useState("");
+  var searchQuery = searchQueryState[0];
+  var setSearchQuery = searchQueryState[1];
+
+  var searchModeState = useState<"song" | "artist">("song");
+  var searchMode = searchModeState[0];
+  var setSearchMode = searchModeState[1];
+
+  var isSearchingState = useState(false);
+  var isSearching = isSearchingState[0];
+  var setIsSearching = isSearchingState[1];
+
+  var searchErrorState = useState("");
+  var searchError = searchErrorState[0];
+  var setSearchError = searchErrorState[1];
+
+  var showQueueState = useState(false);
+  var showQueue = showQueueState[0];
+  var setShowQueue = showQueueState[1];
+
+  var isPlayerReadyState = useState(false);
+  var isPlayerReady = isPlayerReadyState[0];
+  var setIsPlayerReady = isPlayerReadyState[1];
+
+  var isKeyboardActiveState = useState(false);
+  var isKeyboardActive = isKeyboardActiveState[0];
+  var setIsKeyboardActive = isKeyboardActiveState[1];
+
+  var isNumbersState = useState(false);
+  var isNumbers = isNumbersState[0];
+  var setIsNumbers = isNumbersState[1];
+
+  var searchOptionsState = useState<Track[]>([]);
+  var searchOptions = searchOptionsState[0];
+  var setSearchOptions = searchOptionsState[1];
+
+  var playerRef = useRef<any>(null);
+  var progressIntervalRef = useRef<any>(null);
+  var searchInputRef = useRef<HTMLInputElement>(null);
+  var mainSearchInputRef = useRef<HTMLInputElement>(null);
+
+  var isFirstMountRef = useRef(true);
 
   // Auto focus input when keyboard is activated
-  useEffect(() => {
+  useEffect(function () {
     if (isFirstMountRef.current) {
       isFirstMountRef.current = false;
       return;
     }
 
     if (isKeyboardActive) {
-      setTimeout(() => {
-        searchInputRef.current?.focus();
-        // Move cursor to end of text
+      setTimeout(function () {
         if (searchInputRef.current) {
-          const val = searchInputRef.current.value;
+          searchInputRef.current.focus();
+          var val = searchInputRef.current.value;
           searchInputRef.current.value = "";
           searchInputRef.current.value = val;
         }
@@ -425,27 +454,8 @@ export default function App() {
   }, [isKeyboardActive]);
 
   // Setup YouTube player
-  useEffect(() => {
-    const loadYouTubeAPI = () => {
-      if (window.YT && window.YT.Player) {
-        initializePlayer();
-        return;
-      }
-
-      window.onYouTubeIframeAPIReady = () => {
-        initializePlayer();
-      };
-
-      if (!document.getElementById("youtube-iframe-api")) {
-        const tag = document.createElement("script");
-        tag.id = "youtube-iframe-api";
-        tag.src = "https://www.youtube.com/iframe_api";
-        const firstScriptTag = document.getElementsByTagName("script")[0];
-        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-      }
-    };
-
-    const initializePlayer = () => {
+  useEffect(function () {
+    var initializePlayer = function () {
       playerRef.current = new window.YT.Player("youtube-player-element", {
         height: "200px",
         width: "200px",
@@ -462,12 +472,11 @@ export default function App() {
           playsinline: 1,
         },
         events: {
-          onReady: () => {
+          onReady: function () {
             setIsPlayerReady(true);
             playerRef.current.setVolume(isMuted ? 0 : volume);
           },
-          onStateChange: (event: any) => {
-            // YT.PlayerState: PLAYING (1), PAUSED (2), ENDED (0), BUFFERING (3)
+          onStateChange: function (event: any) {
             if (event.data === 1) {
               setIsPlaying(true);
             } else if (event.data === 2) {
@@ -480,9 +489,30 @@ export default function App() {
       });
     };
 
+    var loadYouTubeAPI = function () {
+      if (window.YT && window.YT.Player) {
+        initializePlayer();
+        return;
+      }
+
+      window.onYouTubeIframeAPIReady = function () {
+        initializePlayer();
+      };
+
+      if (!document.getElementById("youtube-iframe-api")) {
+        var tag = document.createElement("script");
+        tag.id = "youtube-iframe-api";
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName("script")[0];
+        if (firstScriptTag && firstScriptTag.parentNode) {
+          firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+      }
+    };
+
     loadYouTubeAPI();
 
-    return () => {
+    return function () {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
@@ -490,7 +520,7 @@ export default function App() {
   }, []);
 
   // Sync state when track changes
-  useEffect(() => {
+  useEffect(function () {
     if (isPlayerReady && playerRef.current && currentTrack.videoId) {
       playerRef.current.cueVideoById({
         videoId: currentTrack.videoId,
@@ -512,12 +542,12 @@ export default function App() {
   }, [currentTrack.videoId, isPlayerReady]);
 
   // Handle time update intervals
-  useEffect(() => {
+  useEffect(function () {
     if (isPlaying && isPlayerReady && playerRef.current) {
-      progressIntervalRef.current = setInterval(() => {
+      progressIntervalRef.current = setInterval(function () {
         if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
-          const current = playerRef.current.getCurrentTime();
-          const total = playerRef.current.getDuration();
+          var current = playerRef.current.getCurrentTime();
+          var total = playerRef.current.getDuration();
           setCurrentTime(current || 0);
           setDuration(total || 0);
         }
@@ -528,14 +558,14 @@ export default function App() {
       }
     }
 
-    return () => {
+    return function () {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
     };
   }, [isPlaying, isPlayerReady, currentTrack.videoId]);
 
-  const handlePlayPause = () => {
+  var handlePlayPause = function () {
     if (!isPlayerReady || !playerRef.current || !currentTrack.videoId) return;
     if (isPlaying) {
       playerRef.current.pauseVideo();
@@ -546,19 +576,19 @@ export default function App() {
     }
   };
 
-  const handlePlayStart = () => {
+  var handlePlayStart = function () {
     if (!isPlayerReady || !playerRef.current || !currentTrack.videoId) return;
     playerRef.current.playVideo();
     setIsPlaying(true);
   };
 
-  const handlePlayEnd = () => {
+  var handlePlayEnd = function () {
     if (!isPlayerReady || !playerRef.current) return;
     playerRef.current.pauseVideo();
     setIsPlaying(false);
   };
 
-  const handleTrackEnded = () => {
+  var handleTrackEnded = function () {
     if (isRepeat) {
       if (playerRef.current) {
         playerRef.current.seekTo(0);
@@ -569,69 +599,67 @@ export default function App() {
     }
   };
 
-  const handleNext = () => {
+  var handleNext = function () {
     if (playlist.length === 0) return;
     if (isShuffle) {
-      const randomIndex = Math.floor(Math.random() * playlist.length);
+      var randomIndex = Math.floor(Math.random() * playlist.length);
       setCurrentTrackIndex(randomIndex);
     } else {
-      setCurrentTrackIndex((prev) => (prev + 1) % playlist.length);
+      setCurrentTrackIndex(function (prev) { return (prev + 1) % playlist.length; });
     }
   };
 
-  const handlePrev = () => {
+  var handlePrev = function () {
     if (playlist.length === 0) return;
     if (currentTime > 5) {
-      // Seek to start if already playing for a bit
       if (playerRef.current) playerRef.current.seekTo(0);
       setCurrentTime(0);
     } else {
       if (isShuffle) {
-        const randomIndex = Math.floor(Math.random() * playlist.length);
+        var randomIndex = Math.floor(Math.random() * playlist.length);
         setCurrentTrackIndex(randomIndex);
       } else {
-        setCurrentTrackIndex((prev) => (prev - 1 + playlist.length) % playlist.length);
+        setCurrentTrackIndex(function (prev) { return (prev - 1 + playlist.length) % playlist.length; });
       }
     }
   };
 
-  const handleSeek = (e: MouseEvent<HTMLDivElement>) => {
+  var handleSeek = function (e: React.MouseEvent<HTMLDivElement>) {
     if (!playerRef.current || !duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percentage = clickX / rect.width;
-    const newTime = percentage * duration;
+    var rect = e.currentTarget.getBoundingClientRect();
+    var clickX = e.clientX - rect.left;
+    var percentage = clickX / rect.width;
+    var newTime = percentage * duration;
     playerRef.current.seekTo(newTime, true);
     setCurrentTime(newTime);
   };
 
-  const handleVolumeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
+  var handleVolumeChange = function (e: React.ChangeEvent<HTMLInputElement>) {
+    var val = parseInt(e.target.value, 10);
     setVolume(val);
     if (playerRef.current && isPlayerReady) {
       playerRef.current.setVolume(isMuted ? 0 : val);
     }
   };
 
-  const handleMuteToggle = () => {
-    const newMuteState = !isMuted;
+  var handleMuteToggle = function () {
+    var newMuteState = !isMuted;
     setIsMuted(newMuteState);
     if (playerRef.current && isPlayerReady) {
       playerRef.current.setVolume(newMuteState ? 0 : volume);
     }
   };
 
-  // Extract YT video ID helper
-  const getYouTubeId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
+  var getYouTubeId = function (url: string) {
+    var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    var match = url.match(regExp);
     return match && match[2].length === 11 ? match[2] : null;
   };
 
-  const getSuperRobustFallbackTracks = (query: string, mode: "song" | "artist" = "song"): any[] => {
-    const q = query.toLowerCase().trim();
+  var getSuperRobustFallbackTracks = function (query: string, mode: "song" | "artist" = "song"): any[] {
+    var q = query.toLowerCase().trim();
     
-    const STATIC_FALLBACK_TRACKS = [
+    var STATIC_FALLBACK_TRACKS = [
       { videoId: "coL7fD8SAnY", title: "Hati-Hati di Jalan", artist: "Tulus" },
       { videoId: "7f9Kz6G8vIE", title: "Monokrom", artist: "Tulus" },
       { videoId: "gP3K7P-lP9A", title: "Diri", artist: "Tulus" },
@@ -660,27 +688,25 @@ export default function App() {
       { videoId: "5qap5aO4i9A", title: "Jazz Relaxing", artist: "Lounge Music" }
     ];
 
-    // Try to find matching tracks based on substring
-    const matches = STATIC_FALLBACK_TRACKS.filter((t) => {
-      return t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q);
+    var matches = STATIC_FALLBACK_TRACKS.filter(function (t) {
+      return t.title.toLowerCase().indexOf(q) !== -1 || t.artist.toLowerCase().indexOf(q) !== -1;
     });
 
     if (matches.length > 0) {
       return matches;
     }
 
-    // Synthesize 3 custom aesthetic tracks if no matches found
-    const hashString = (str: string) => {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
+    var hashString = function (str: string) {
+      var hash = 0;
+      for (var i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
       }
       return Math.abs(hash);
     };
 
-    const seed = hashString(q);
+    var seed = hashString(q);
     
-    const stableStreamIds = [
+    var stableStreamIds = [
       { id: "jfKfPfyJRdk", suffix: "Chill Lofi Edit", defaultArtist: "Lofi Girl" },
       { id: "8GW6sLrK40k", suffix: "Synthwave Instrumental", defaultArtist: "Synthwave Classics" },
       { id: "UfcAVejsrU4", suffix: "Ambient Relaxing Session", defaultArtist: "Marconi Union" },
@@ -690,27 +716,27 @@ export default function App() {
       { id: "hhnZkNj764I", suffix: "Retro Night Drive Mix", defaultArtist: "The xx Fallback" }
     ];
 
-    const results: any[] = [];
+    var results = [];
     
-    for (let i = 0; i < 3; i++) {
-      const streamIndex = (seed + i) % stableStreamIds.length;
-      const stream = stableStreamIds[streamIndex];
+    for (var i = 0; i < 3; i++) {
+      var streamIndex = (seed + i) % stableStreamIds.length;
+      var stream = stableStreamIds[streamIndex];
       
-      const capitalizedQuery = query
+      var capitalizedQuery = query
         .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .map(function (word) { return word.charAt(0).toUpperCase() + word.slice(1); })
         .join(" ");
 
       if (mode === "artist") {
         results.push({
           videoId: stream.id,
-          title: `${capitalizedQuery} - Greatest Hits (Vol. ${i + 1})`,
+          title: capitalizedQuery + " - Greatest Hits (Vol. " + (i + 1) + ")",
           artist: capitalizedQuery,
         });
       } else {
         results.push({
           videoId: stream.id,
-          title: `${capitalizedQuery} (${stream.suffix})`,
+          title: capitalizedQuery + " (" + stream.suffix + ")",
           artist: "Aesthetic Fallback",
         });
       }
@@ -719,22 +745,19 @@ export default function App() {
     return results;
   };
 
-  // Reusable search function
-  const performSearch = async (query: string) => {
+  var performSearch = async function (query: string) {
     if (!query.trim()) return;
     setSearchError("");
     setIsSearching(true);
-    // Hide virtual keyboard to let search options take over
     setIsKeyboardActive(false);
 
-    // Direct link or 11-char ID support
-    const directId = getYouTubeId(query) || (query.trim().length === 11 ? query.trim() : null);
+    var directId = getYouTubeId(query) || (query.trim().length === 11 ? query.trim() : null);
     if (directId) {
-      const newTrack: Track = {
+      var newTrack: Track = {
         videoId: directId,
-        title: `New Track (${directId})`,
+        title: "New Track (" + directId + ")",
         artist: "YouTube Video",
-        thumbnail: `https://img.youtube.com/vi/${directId}/hqdefault.jpg`,
+        thumbnail: "https://img.youtube.com/vi/" + directId + "/hqdefault.jpg",
       };
 
       setSearchOptions([newTrack]);
@@ -743,30 +766,29 @@ export default function App() {
       return;
     }
 
-    // Call server API and client-side Invidious search in parallel race
-    const backendSearch = async (): Promise<any[]> => {
-      const apiBase = import.meta.env.VITE_API_URL || "";
-      const res = await fetch(`${apiBase}/api/search`, {
+    var backendSearch = async function (): Promise<any[]> {
+      var apiBase = import.meta.env.VITE_API_URL || "";
+      var res = await fetch(apiBase + "/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, mode: searchMode }),
+        body: JSON.stringify({ query: query, mode: searchMode }),
       });
       if (!res.ok) {
-        throw new Error(`Backend search failed: ${res.status}`);
+        throw new Error("Backend search failed: " + res.status);
       }
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
+      var contentType = res.headers.get("content-type");
+      if (!contentType || contentType.indexOf("application/json") === -1) {
         throw new Error("Backend did not return JSON");
       }
-      const resData = await res.json();
+      var resData = await res.json();
       if (!Array.isArray(resData) || resData.length === 0) {
         throw new Error("Backend returned empty results");
       }
       return resData;
     };
 
-    const clientSearch = async (): Promise<any[]> => {
-      const resData = await clientSideSearchYoutube(query, searchMode);
+    var clientSearch = async function (): Promise<any[]> {
+      var resData = await clientSideSearchYoutube(query, searchMode);
       if (!Array.isArray(resData) || resData.length === 0) {
         throw new Error("Client search returned empty results");
       }
@@ -774,703 +796,656 @@ export default function App() {
     };
 
     try {
-      let data: any[] = [];
+      var data: any[] = [];
 
       try {
-        // Race both backend and client-side searches. Whichever resolves first with valid data wins instantly!
         data = await anyPromise([
           backendSearch(),
           clientSearch()
         ]);
       } catch (raceErr) {
-        console.warn("Both parallel backend and client searches failed/timed out, triggering robust fallback tracks...", raceErr);
+        console.warn("Parallel searches failed, running static fallback...", raceErr);
         data = getSuperRobustFallbackTracks(query, searchMode);
       }
 
       if (Array.isArray(data) && data.length > 0) {
-        const tracks: Track[] = data.map((t: any) => ({
-          videoId: t.videoId,
-          title: t.title || "Unknown Title",
-          artist: t.artist || "Unknown Artist",
-          thumbnail: `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`,
-        }));
+        var tracks: Track[] = data.map(function (t: any) {
+          return {
+            videoId: t.videoId,
+            title: t.title || "Unknown Title",
+            artist: t.artist || "Unknown Artist",
+            thumbnail: "https://i.ytimg.com/vi/" + t.videoId + "/hqdefault.jpg",
+          };
+        });
         setSearchOptions(tracks);
         setSearchQuery("");
       } else {
         setSearchError("Song not found.");
       }
     } catch (err: any) {
-      console.error(err);
-      // Fallback search should never fail, but just in case, supply generic fallback
-      const fallback = getSuperRobustFallbackTracks(query, searchMode);
-      const tracks: Track[] = fallback.map((t: any) => ({
-        videoId: t.videoId,
-        title: t.title || "Unknown Title",
-        artist: t.artist || "Unknown Artist",
-        thumbnail: `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`,
-      }));
-      setSearchOptions(tracks);
-      setSearchQuery("");
+      console.error("Search error:", err);
+      setSearchError("Search failed. Please try again.");
     } finally {
       setIsSearching(false);
     }
   };
 
-  const handleSelectSearchOption = (track: Track, playNow: boolean = true) => {
-    setPlaylist((prev) => {
-      const existingIdx = prev.findIndex((t) => t.videoId === track.videoId);
-      if (existingIdx !== -1) {
-        if (playNow) {
-          setCurrentTrackIndex(existingIdx);
-          setIsPlaying(true);
+  var handleSearchSubmit = function (e: React.FormEvent) {
+    e.preventDefault();
+    performSearch(searchQuery);
+  };
+
+  var handleSelectSearchOption = function (track: Track, andPlay: boolean) {
+    setPlaylist(function (prev) {
+      var alreadyExists = prev.some(function (t) { return t.videoId === track.videoId; });
+      if (alreadyExists) {
+        if (andPlay) {
+          var existingIdx = prev.findIndex(function (t) { return t.videoId === track.videoId; });
+          if (existingIdx !== -1) {
+            setCurrentTrackIndex(existingIdx);
+            setIsPlaying(true);
+          }
         }
         return prev;
       }
-      const updated = [...prev, track];
-      if (playNow) {
+      
+      var updated = prev.concat(track);
+      if (andPlay) {
         setCurrentTrackIndex(updated.length - 1);
         setIsPlaying(true);
       }
       return updated;
     });
-    if (playNow) {
-      setSearchOptions([]); // Clear list after selecting to play immediately
-    }
+    setSearchOptions([]);
   };
 
-  const handleSearchSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    performSearch(searchQuery);
-  };
-
-  const handleVirtualKeyPress = (val: string) => {
+  var handleVirtualKeyPress = function (val: string) {
     if (val === "SPACE") {
-      setSearchQuery((prev) => prev + " ");
+      setSearchQuery(function (prev) { return prev + " "; });
     } else if (val === "BACKSPACE") {
-      setSearchQuery((prev) => prev.slice(0, -1));
+      setSearchQuery(function (prev) { return prev.slice(0, -1); });
     } else if (val === "CLEAR") {
       setSearchQuery("");
     } else if (val === "CARI") {
       performSearch(searchQuery);
     } else {
-      setSearchQuery((prev) => prev + val);
+      setSearchQuery(function (prev) { return prev + val; });
     }
   };
 
-  const formatTime = (secs: number) => {
-    if (isNaN(secs) || secs < 0) return "0:00";
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60);
-    return `${m}:${s < 10 ? "0" : ""}${s}`;
+  var handleRemoveTrack = function (idxToRemove: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    setPlaylist(function (prev) {
+      var updated = prev.filter(function (_, idx) { return idx !== idxToRemove; });
+      if (idxToRemove === currentTrackIndex) {
+        var newIndex = Math.min(idxToRemove, Math.max(0, updated.length - 1));
+        setCurrentTrackIndex(newIndex);
+      } else if (idxToRemove < currentTrackIndex) {
+        setCurrentTrackIndex(currentTrackIndex - 1);
+      }
+      return updated;
+    });
   };
 
-  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+  var handleClearPlaylist = function () {
+    setPlaylist([]);
+    setCurrentTrackIndex(0);
+    setIsPlaying(false);
+  };
+
+  var formatTime = function (secs: number) {
+    if (isNaN(secs) || secs < 0) return "0:00";
+    var m = Math.floor(secs / 60);
+    var s = Math.floor(secs % 60);
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  };
+
+  var progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  var row1Keys = isNumbers
+    ? ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+    : ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
+
+  var row2Keys = isNumbers
+    ? ["-", "/", ":", ";", "(", ")", "$", "&", "@"]
+    : ["A", "S", "D", "F", "G", "H", "J", "K", "L"];
+
+  var row3Keys = isNumbers
+    ? [".", ",", "?", "!", "'", "_", "+"]
+    : ["Z", "X", "C", "V", "B", "N", "M"];
 
   return (
-    <div className="w-screen h-screen bg-[#000000] flex items-center justify-center overflow-hidden font-sans text-white select-none">
-      {/* Hidden YouTube Iframe Target - Positioned off-screen with non-zero dimensions for iOS/Safari compatibility */}
-      <div className="fixed -left-[9999px] -top-[9999px] w-[200px] h-[200px] opacity-[0.01] pointer-events-none overflow-hidden">
+    <div className="app-wrapper">
+      {/* Hidden YouTube Iframe Target */}
+      <div style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "200px", height: "200px", opacity: 0.01, overflow: "hidden" }}>
         <div id="youtube-player-element"></div>
       </div>
 
-      {/* Main Container - Truly fullscreen for vertical tablet screens */}
-      <div className="w-full h-full bg-[#000000] flex flex-col relative overflow-hidden">
+      {/* --- 50% TOP AREA --- strictly empty and pitch black */}
+      <div className="top-area-empty" />
+
+      {/* --- 50% BOTTOM AREA --- */}
+      <div className="bottom-area-container">
         
-        {/* --- 50% TOP AREA ---
-            MUST be kept strictly empty, pitch black, with absolutely no text, buttons, or elements at all. */}
-        <div className="h-1/2 w-full bg-black select-none pointer-events-none" />
-
-        {/* --- 50% BOTTOM AREA ---
-            Sophisticated Dark theme container: all active playback controls, volume, seeking, metadata, and the vinyl are here. */}
-        <div className="h-1/2 w-full bg-[#0a0a0a] flex flex-col justify-between p-6 sm:p-8 md:p-10 relative border-t border-white/5 overflow-hidden">
-          
-          {/* PROGRESS & SEEK BAR (Top-anchored active line with a glowing head) */}
-          <div
-            onClick={handleSeek}
-            className="absolute top-0 left-0 w-full h-3 cursor-pointer z-20 group"
-            title="Click to seek position"
-          >
-            <div className="w-full h-[2px] bg-white/5 relative group-hover:h-[4px] transition-all duration-200">
-              <div
-                className="h-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.7)] transition-all duration-200"
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
+        {/* PROGRESS & SEEK BAR */}
+        <div onClick={handleSeek} className="progress-seek-bar">
+          <div className="seek-track">
+            <div className="seek-fill" style={{ width: progressPercentage + "%" }} />
           </div>
+        </div>
 
-          {searchOptions.length > 0 ? (
-            <div className="flex-1 flex flex-col justify-between w-full h-full min-h-0 pt-3">
-              {/* Header and Close */}
-              <div className="flex justify-between items-center pb-2.5 border-b border-white/5">
-                <div className="space-y-1">
-                  <h3 className="text-xs sm:text-sm font-mono font-semibold tracking-[0.15em] text-white uppercase">
-                    SELECT SONG TO PLAY
-                  </h3>
-                  <p className="text-[10px] text-white/40 font-mono tracking-wider">
-                    Found {searchOptions.length} search results
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSearchOptions([])}
-                  className="flex items-center gap-1.5 text-[10px] font-mono tracking-widest text-white/50 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full border border-white/10 uppercase transition-all"
-                >
-                  <X className="w-3 h-3" /> Close
-                </button>
+        {searchOptions.length > 0 ? (
+          /* Search results layer over bottom controls */
+          <div className="search-results-panel">
+            <div className="search-results-header">
+              <div style={{ position: "absolute", left: "0px", top: "0px" }}>
+                <h3 className="search-results-title">SELECT SONG TO PLAY</h3>
+                <p className="search-results-subtitle">Found {searchOptions.length} search results</p>
               </div>
+              <button
+                type="button"
+                onClick={function () { setSearchOptions([]); }}
+                className="search-results-close-btn"
+              >
+                <X style={{ width: "12px", height: "12px", marginRight: "6px" }} /> Close
+              </button>
+            </div>
 
-              {/* List of Search Results */}
-              <div className="flex-1 overflow-y-auto py-3 space-y-2 max-h-[220px] sm:max-h-[280px] scrollbar-thin pr-1">
-                {searchOptions.map((track, idx) => (
-                  <div
-                    key={`${track.videoId}-${idx}`}
-                    className="group/item flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300"
-                  >
-                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                      {/* Thumbnail with custom overlay hover effect */}
-                      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-black flex-shrink-0 border border-white/5 group-hover/item:border-white/15 transition-all">
+            <div className="search-results-list">
+              {searchOptions.map(function (track, idx) {
+                var isAdded = playlist.some(function (t) { return t.videoId === track.videoId; });
+                var handlePlayClick = function () { handleSelectSearchOption(track, true); };
+                var handleQueueClick = function () { handleSelectSearchOption(track, false); };
+                var trackThumbnail = track.thumbnail ? track.thumbnail.replace("img.youtube.com", "i.ytimg.com") : "";
+
+                return (
+                  <div key={track.videoId + "-" + idx} className="search-result-item">
+                    <div className="search-result-info">
+                      {trackThumbnail ? (
                         <img
-                          src={track.thumbnail.replace("img.youtube.com", "i.ytimg.com")}
-                          alt={track.title}
-                          onError={(e) => {
+                          src={trackThumbnail}
+                          alt=""
+                          onError={function (e) {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
                           }}
-                          className="w-full h-full object-cover opacity-80 group-hover/item:scale-105 transition-transform duration-500"
+                          className="search-result-thumbnail"
                         />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
-                          <Play className="w-4 h-4 text-white fill-current" />
-                        </div>
-                      </div>
-
-                      {/* Title & Artist */}
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <h4
-                          onClick={() => handleSelectSearchOption(track, true)}
-                          className="text-xs sm:text-sm font-medium text-white/90 group-hover/item:text-white truncate cursor-pointer transition-colors"
-                        >
-                          {track.title}
-                        </h4>
-                        <p className="text-[10px] sm:text-xs text-white/40 truncate font-mono uppercase tracking-wider">
-                          {track.artist}
-                        </p>
+                      ) : (
+                        <div className="search-result-thumbnail" style={{ backgroundColor: "#1c1c1c" }} />
+                      )}
+                      <div className="search-result-text-container">
+                        <h4 onClick={handlePlayClick} className="search-result-title">{track.title}</h4>
+                        <p className="search-result-artist">{track.artist}</p>
                       </div>
                     </div>
 
-                    {/* Actions on the right side */}
-                    <div className="flex items-center gap-2 pl-3">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectSearchOption(track, true)}
-                        className="px-3.5 py-1.5 text-[10px] font-mono font-bold tracking-widest text-black bg-white rounded-lg hover:bg-white/90 active:scale-95 transition-all flex items-center gap-1.5 uppercase shadow-sm"
-                      >
-                        <Play className="w-3 h-3 fill-current" /> Play
+                    <div className="search-result-actions">
+                      <button type="button" onClick={handlePlayClick} className="search-play-btn">
+                        PLAY
                       </button>
-                      {playlist.some((t) => t.videoId === track.videoId) ? (
-                        <div className="px-3 py-1.5 text-[10px] font-mono tracking-widest text-green-400 bg-green-500/10 rounded-lg border border-green-500/20 flex items-center gap-1.5 uppercase font-medium">
-                          <Check className="w-3 h-3" /> In Queue
+                      {isAdded ? (
+                        <div className="search-queue-status">
+                          IN QUEUE
                         </div>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleSelectSearchOption(track, false)}
-                          className="px-3 py-1.5 text-[10px] font-mono tracking-widest text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 hover:border-white/10 active:scale-95 transition-all flex items-center gap-1.5 uppercase"
-                          title="Add to Queue"
-                        >
-                          <Plus className="w-3 h-3" /> + Queue
+                        <button type="button" onClick={handleQueueClick} className="search-queue-btn">
+                          + QUEUE
                         </button>
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          ) : isKeyboardActive ? (
-            <div className="flex-1 flex flex-col justify-between w-full h-full min-h-0 pt-3">
-              {/* TOP: SEARCH BOX AND SUGGESTIONS CAROUSEL */}
-              <div className="space-y-4">
-                {/* Custom Search Form with Close (Tutup) button */}
-                <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-                  <Search className="absolute left-0 w-4 h-4 text-white/30" />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={searchMode === "song" ? "TYPE SONG TITLE OR PASTE LINK..." : "TYPE ARTIST NAME (E.G. TULUS, COLDPLAY)..."}
-                    disabled={isSearching}
-                    className="w-full bg-transparent border-b border-white/10 text-white text-xs sm:text-sm font-mono tracking-[0.1em] py-2 pl-7 pr-24 focus:outline-none focus:border-white/30 transition-all disabled:opacity-50"
-                  />
-                  <div className="absolute right-0 flex items-center gap-2.5">
-                    {isSearching ? (
-                      <Loader2 className="w-4 h-4 text-white/40 animate-spin" />
-                    ) : searchQuery ? (
-                      <button
-                        type="button"
-                        onClick={() => setSearchQuery("")}
-                        className="text-white/30 hover:text-white/60 p-1"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => setIsKeyboardActive(false)}
-                      className="text-[9px] font-mono tracking-widest text-white/50 hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded border border-white/10 uppercase"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </form>
-
-                {/* Search Mode Toggle (Song vs. Artist) */}
-                <div className="flex items-center gap-3 px-1">
-                  <span className="text-[8px] font-mono tracking-[0.25em] text-white/30 uppercase">
-                    MODE:
-                  </span>
-                  <div className="flex bg-white/[0.03] p-0.5 rounded-lg border border-white/5">
-                    <button
-                      type="button"
-                      onClick={() => setSearchMode("song")}
-                      className={`px-3 py-1 text-[8px] font-mono tracking-widest uppercase transition-all duration-200 rounded-md ${
-                        searchMode === "song"
-                          ? "bg-white text-black font-bold shadow-sm"
-                          : "text-white/50 hover:text-white hover:bg-white/[0.02]"
-                      }`}
-                    >
-                      SONG (LAGU)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSearchMode("artist")}
-                      className={`px-3 py-1 text-[8px] font-mono tracking-widest uppercase transition-all duration-200 rounded-md ${
-                        searchMode === "artist"
-                          ? "bg-white text-black font-bold shadow-sm"
-                          : "text-white/50 hover:text-white hover:bg-white/[0.02]"
-                      }`}
-                    >
-                      ARTIST (PENYANYI)
-                    </button>
-                  </div>
-                </div>
-
-                {/* Error Banner */}
-                {searchError && (
-                  <div className="text-[10px] sm:text-xs text-red-400 font-mono tracking-wider bg-red-950/30 border border-red-900/40 rounded-xl p-3 leading-relaxed whitespace-pre-line">
-                    {searchError}
-                  </div>
-                )}
-
-                {/* "PILIHAN YANG BISA DI PENCET" (Horizontal Carousel Suggestions) */}
-                <div className="space-y-1.5 px-0.5">
-                  <span className="text-[8px] font-mono tracking-[0.25em] text-white/20 uppercase block">
-                    Popular Choices (Tap to search):
-                  </span>
-                  <div className="flex gap-2 overflow-x-auto py-1 scrollbar-none snap-x touch-pan-x">
-                    {SUGGESTED_QUERIES.map((q) => (
-                      <button
-                        key={q}
-                        type="button"
-                        onClick={() => {
-                          setSearchQuery(q);
-                          performSearch(q);
-                        }}
-                        className="flex-shrink-0 snap-center px-3 py-1.5 text-[9px] font-mono tracking-wider bg-white/5 border border-white/5 rounded-full text-white/60 hover:text-white hover:bg-white/10 hover:border-white/15 active:scale-95 transition-all uppercase"
-                      >
-                        {q}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>              {/* CENTER/BOTTOM: PREMIUM VIRTUAL QWERTY KEYBOARD */}
-              <div className="w-full max-w-3xl mx-auto bg-black/50 border border-white/5 rounded-2xl p-3 sm:p-5 space-y-2 sm:space-y-3 shadow-2xl backdrop-blur-md flex-1 flex flex-col justify-center">
-                {/* Row 1 */}
-                <div className="flex justify-center gap-1 sm:gap-2 md:gap-2.5">
-                  {(isNumbers
-                    ? ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
-                    : ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"]
-                  ).map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => handleVirtualKeyPress(k)}
-                      className="flex-1 max-w-[64px] h-11 sm:h-14 md:h-16 rounded-xl bg-[#141414] border border-white/5 hover:border-white/15 text-sm sm:text-base md:text-lg font-mono flex items-center justify-center hover:bg-[#1a1a1a] active:scale-95 transition-all text-white/90 font-medium"
-                    >
-                      {k}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Row 2 */}
-                <div className="flex justify-center gap-1 sm:gap-2 md:gap-2.5 px-[4%]">
-                  {(isNumbers
-                    ? ["-", "/", ":", ";", "(", ")", "$", "&", "@", '"']
-                    : ["A", "S", "D", "F", "G", "H", "J", "K", "L"]
-                  ).map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => handleVirtualKeyPress(k)}
-                      className="flex-1 max-w-[64px] h-11 sm:h-14 md:h-16 rounded-xl bg-[#141414] border border-white/5 hover:border-white/15 text-sm sm:text-base md:text-lg font-mono flex items-center justify-center hover:bg-[#1a1a1a] active:scale-95 transition-all text-white/90 font-medium"
-                    >
-                      {k}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Row 3 */}
-                <div className="flex justify-center gap-1 sm:gap-2 md:gap-2.5">
-                  {(isNumbers
-                    ? [".", ",", "?", "!", "'", "_", "+"]
-                    : ["Z", "X", "C", "V", "B", "N", "M"]
-                  ).map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => handleVirtualKeyPress(k)}
-                      className="flex-1 max-w-[64px] h-11 sm:h-14 md:h-16 rounded-xl bg-[#141414] border border-white/5 hover:border-white/15 text-sm sm:text-base md:text-lg font-mono flex items-center justify-center hover:bg-[#1a1a1a] active:scale-95 transition-all text-white/90 font-medium"
-                    >
-                      {k}
-                    </button>
-                  ))}
-                  {/* Backspace Button inside Row 3 */}
-                  <button
-                    type="button"
-                    onClick={() => handleVirtualKeyPress("BACKSPACE")}
-                    className="flex-1 max-w-[96px] h-11 sm:h-14 md:h-16 rounded-xl bg-[#2e1414] border border-red-950 hover:border-red-900 text-xs sm:text-sm md:text-base font-mono flex items-center justify-center hover:bg-[#401c1c] active:scale-95 transition-all text-red-400 font-medium"
-                    title="Delete character"
-                  >
-                    DEL
-                  </button>
-                </div>
-
-                {/* Row 4 */}
-                <div className="flex justify-center gap-1 sm:gap-2 md:gap-2.5">
-                  {/* Mode Toggle Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsNumbers(!isNumbers)}
-                    className="flex-1 max-w-[96px] h-11 sm:h-14 md:h-16 rounded-xl bg-[#1a1a1a] border border-white/10 hover:border-white/20 text-xs sm:text-sm md:text-base font-mono flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all text-white font-medium"
-                  >
-                    {isNumbers ? "ABC" : "123"}
-                  </button>
-
-                  {/* Clear Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleVirtualKeyPress("CLEAR")}
-                    className="flex-1 max-w-[96px] h-11 sm:h-14 md:h-16 rounded-xl bg-[#141414] border border-white/5 hover:border-white/15 text-xs sm:text-sm md:text-base font-mono flex items-center justify-center hover:bg-[#1e1e1e] active:scale-95 transition-all text-white/50 hover:text-white font-medium"
-                  >
-                    CLEAR
-                  </button>
-
-                  {/* Space Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleVirtualKeyPress("SPACE")}
-                    className="flex-[3] max-w-[320px] h-11 sm:h-14 md:h-16 rounded-xl bg-[#141414] border border-white/5 hover:border-white/15 text-xs sm:text-sm md:text-base font-mono flex items-center justify-center hover:bg-[#1a1a1a] active:scale-95 transition-all text-white/60 font-medium"
-                  >
-                    SPACE
-                  </button>
-
-                  {/* Search / Submit Button */}
-                  <button
-                    type="submit"
-                    onClick={() => handleVirtualKeyPress("CARI")}
-                    className="flex-[2] max-w-[140px] h-11 sm:h-14 md:h-16 rounded-xl bg-white text-black text-xs sm:text-sm md:text-base font-mono font-bold flex items-center justify-center hover:bg-white/90 active:scale-95 transition-all shadow-[0_0_15px_rgba(255,255,255,0.25)]"
-                  >
-                    SEARCH
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-row items-center justify-between gap-6 md:gap-12 w-full h-full min-h-0 pt-2">
-              {/* LEFT SIDE: SEARCH, TITLE, METRIC & CONTROLS */}
-              <div className="flex-1 flex flex-col justify-between h-full min-h-0 max-w-[50%] sm:max-w-[55%]">
-                {/* SEARCH & TITLE LAYER */}
-                <div className="space-y-4">
-                  {/* Minimalist Premium Search Box */}
-                  <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-                    <Search className="absolute left-0 w-3.5 h-3.5 text-white/30" />
-                    <input
-                      ref={mainSearchInputRef}
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => setIsKeyboardActive(true)}
-                      onClick={() => setIsKeyboardActive(true)}
-                      placeholder="PASTE YOUTUBE LINK OR VIDEO ID..."
-                      disabled={isSearching}
-                      className="w-full bg-transparent border-b border-white/5 text-white/70 placeholder-white/20 text-[10px] font-mono tracking-[0.15em] py-1.5 pl-6 pr-8 focus:outline-none focus:border-white/20 transition-all disabled:opacity-50 cursor-pointer"
-                    />
-                    {isSearching ? (
-                      <Loader2 className="absolute right-0 w-3.5 h-3.5 text-white/40 animate-spin" />
-                    ) : searchQuery ? (
-                      <button
-                        type="button"
-                        onClick={() => setSearchQuery("")}
-                        className="absolute right-0 text-white/30 hover:text-white/60"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    ) : null}
-                  </form>
-
-                  {/* Error Message banner */}
-                  {searchError && (
-                    <div className="text-[9px] text-red-400 font-mono tracking-widest uppercase animate-pulse">
-                      {searchError}
-                    </div>
-                  )}
-
-                  {/* Currently Playing Song Metadata */}
-                  <div className="flex justify-between items-start pt-2">
-                    <div className="space-y-1.5 max-w-[80%]">
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-white line-clamp-2">
-                        {currentTrack.title}
-                      </h1>
-                      <p className="text-xs md:text-sm text-white/40 tracking-[0.2em] font-light uppercase line-clamp-1">
-                        {currentTrack.artist}
-                      </p>
-                    </div>
-
-                    {/* Minimalist Playlist Toggle */}
-                    <button
-                      onClick={() => setShowQueue(!showQueue)}
-                      className={`p-2 rounded-full transition-all duration-300 ${
-                        showQueue
-                          ? "bg-white/10 text-white"
-                          : "text-white/30 hover:text-white/60 hover:bg-white/5"
-                      }`}
-                      title="Show Playlist"
-                    >
-                      <ListMusic className="w-4.5 h-4.5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* CONTROLS AREA */}
-                <div className="space-y-4">
-                  {/* Minimalist Time Indicators */}
-                  <div className="flex gap-4 text-[10px] tracking-[0.25em] text-white/30 uppercase font-mono">
-                    <span>{formatTime(currentTime)}</span>
-                    <span className="opacity-20">/</span>
-                    <span>{formatTime(duration)}</span>
-                  </div>
-
-                  {/* Playback Buttons Layout */}
-                  <div className="flex items-center gap-4 md:gap-5 flex-wrap">
-                    {/* Prev */}
-                    <button
-                      onClick={handlePrev}
-                      className="text-white/40 hover:text-white transition-colors p-1"
-                      disabled={!isPlayerReady}
-                      title="Previous"
-                    >
-                      <SkipBack className="w-5 h-5 fill-current" />
-                    </button>
-
-                    {/* Next */}
-                    <button
-                      onClick={handleNext}
-                      className="text-white/40 hover:text-white transition-colors p-1"
-                      disabled={!isPlayerReady}
-                      title="Next"
-                    >
-                      <SkipForward className="w-5 h-5 fill-current" />
-                    </button>
-
-                    {/* Shuffle mode */}
-                    <button
-                      onClick={() => setIsShuffle(!isShuffle)}
-                      className={`p-1 transition-colors relative ${
-                        isShuffle ? "text-white" : "text-white/20 hover:text-white/40"
-                      }`}
-                      title="Shuffle"
-                    >
-                      <Shuffle className="w-3.5 h-3.5" />
-                      {isShuffle && (
-                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white" />
-                      )}
-                    </button>
-
-                    {/* Repeat mode */}
-                    <button
-                      onClick={() => setIsRepeat(!isRepeat)}
-                      className={`p-1 transition-colors relative ${
-                        isRepeat ? "text-white" : "text-white/20 hover:text-white/40"
-                      }`}
-                      title="Repeat"
-                    >
-                      <Repeat className="w-3.5 h-3.5" />
-                      {isRepeat && (
-                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white" />
-                      )}
-                    </button>
-
-                    {/* Mute/Volume controls */}
-                    <div className="flex items-center gap-1.5 group/vol relative">
-                      <button
-                        onClick={handleMuteToggle}
-                        className="text-white/20 hover:text-white/50 transition-colors p-1"
-                        title={isMuted ? "Unmute" : "Mute"}
-                      >
-                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                      </button>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={volume}
-                        onChange={handleVolumeChange}
-                        className="w-12 md:w-16 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white opacity-0 group-hover/vol:opacity-100 transition-opacity duration-300"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* RIGHT SIDE: HUGE VINYL RECORD */}
-              <div className="flex-1 flex-shrink-0 flex items-center justify-center h-full min-h-0 relative z-10">
-                <div className="w-full h-full max-h-full flex items-center justify-center p-2">
-                  <VinylRecord
-                    isPlaying={isPlaying}
-                    currentTrack={currentTrack}
-                    onPressStart={handlePlayStart}
-                    onPressEnd={handlePlayEnd}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SLIDING QUEUE / PLAYLIST DRAWER */}
-          <div
-            className={`absolute bottom-0 left-0 right-0 bg-[#070707] border-t border-white/5 transition-transform duration-300 ease-out z-30 shadow-2xl ${
-              showQueue ? "translate-y-0" : "translate-y-full"
-            }`}
-            style={{ height: "calc(100% - 12px)" }}
-          >
-            <div className="flex flex-col h-full">
-              {/* Drawer Header */}
-              <div className="flex justify-between items-center px-8 py-5 border-b border-white/5">
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-mono tracking-[0.2em] text-white/40 uppercase">
-                    Playlist Queue ({playlist.length})
-                  </span>
-                  {playlist.length > 0 && (
-                    <button
-                      onClick={handleClearPlaylist}
-                      className="px-2.5 py-1 text-[9px] font-mono tracking-widest text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 rounded-md border border-red-950 transition-all uppercase font-medium"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
+          </div>
+        ) : isKeyboardActive ? (
+          /* Premium Virtual QWERTY Keyboard panel */
+          <div className="keyboard-panel">
+            <div className="keyboard-search-header">
+              <Search className="keyboard-search-icon" style={{ width: "16px", height: "16px" }} />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={function (e) { setSearchQuery(e.target.value); }}
+                placeholder={searchMode === "song" ? "TYPE SONG TITLE OR LINK..." : "TYPE ARTIST NAME..."}
+                disabled={isSearching}
+                className="keyboard-search-input"
+              />
+              
+              {/* Mode Toggle inside Keyboard */}
+              <div className="keyboard-mode-toggle">
                 <button
-                  onClick={() => setShowQueue(false)}
-                  className="p-1 rounded-full text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
+                  type="button"
+                  onClick={function () { setSearchMode("song"); }}
+                  className={"kbd-toggle-btn" + (searchMode === "song" ? " active" : "")}
                 >
-                  <X className="w-4 h-4" />
+                  SONG
+                </button>
+                <button
+                  type="button"
+                  onClick={function () { setSearchMode("artist"); }}
+                  className={"kbd-toggle-btn" + (searchMode === "artist" ? " active" : "")}
+                >
+                  ARTIST
                 </button>
               </div>
 
-              {/* Drawer Songs List */}
-              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1.5 scrollbar-thin">
-                {playlist.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full py-16 text-center space-y-3">
-                    <ListMusic className="w-10 h-10 text-white/10" />
-                    <div className="space-y-1">
-                      <p className="text-xs font-mono text-white/30 uppercase tracking-wider">Queue Empty</p>
-                      <p className="text-[10px] text-white/20">Search for songs above to add them to the queue.</p>
-                    </div>
-                  </div>
-                ) : (
-                  playlist.map((track, idx) => {
-                    const isActive = idx === currentTrackIndex;
-                    return (
-                      <div
-                        key={`${track.videoId}-${idx}`}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl transition-all border ${
-                          isActive
-                            ? "bg-white/5 border-white/10 text-white"
-                            : "hover:bg-white/[0.02] border-transparent text-white/40 hover:text-white"
-                        }`}
-                      >
-                        {/* Play Action / Title / Artist */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCurrentTrackIndex(idx);
-                            setShowQueue(false);
-                            setIsPlaying(true);
-                          }}
-                          className="flex-1 flex items-center gap-4 text-left min-w-0"
-                        >
-                          <div className="relative flex-shrink-0">
-                            {track.thumbnail ? (
-                              <img
-                                src={track.thumbnail.replace("img.youtube.com", "i.ytimg.com")}
-                                alt=""
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
-                                }}
-                                className="w-9 h-9 object-cover rounded-md bg-neutral-900 border border-white/5"
-                              />
-                            ) : (
-                              <div className="w-9 h-9 bg-neutral-900 rounded-md border border-white/5" />
-                            )}
-                            {isActive && isPlaying && (
-                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
-                                <span className="flex gap-0.5 items-end h-3">
-                                  <span className="w-0.5 bg-white rounded-full animate-[bounce_1s_infinite] h-full" />
-                                  <span className="w-0.5 bg-white rounded-full animate-[bounce_1s_infinite_200ms] h-[75%]" />
-                                  <span className="w-0.5 bg-white rounded-full animate-[bounce_1s_infinite_400ms] h-[50%]" />
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className={`text-xs tracking-tight truncate ${isActive ? "font-medium" : ""}`}>
-                              {track.title}
-                            </div>
-                            <div className="text-[9px] font-mono text-white/30 mt-0.5 tracking-wider uppercase truncate">
-                              {track.artist}
-                            </div>
-                          </div>
-                        </button>
+              <button
+                type="button"
+                onClick={function () { setIsKeyboardActive(false); }}
+                className="keyboard-close-header-btn"
+              >
+                Close
+              </button>
+            </div>
 
-                        {/* Actions: Playing Status indicator and Delete Button */}
-                        <div className="flex items-center gap-3 pl-3 flex-shrink-0">
-                          {isActive ? (
-                            <span className="text-[8px] font-mono text-white/50 bg-white/10 px-2 py-0.5 rounded border border-white/5 uppercase tracking-wider">
-                              Now Playing
-                            </span>
-                          ) : (
-                            <span className="text-[8px] font-mono text-white/20 uppercase tracking-widest px-2 py-0.5">
-                              Queue
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={(e) => handleRemoveTrack(idx, e)}
-                            className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/15 transition-all"
-                            title="Remove from Queue"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+            {/* Suggestions chips */}
+            <div className="suggestions-carousel">
+              {SUGGESTED_QUERIES.map(function (q) {
+                var handleChipClick = function () {
+                  setSearchQuery(q);
+                  performSearch(q);
+                };
+                return (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={handleChipClick}
+                    className="suggestion-chip"
+                  >
+                    {q}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Keys Area */}
+            <div className="keyboard-keys-area">
+              {/* Row 1 */}
+              <div className="keyboard-row keyboard-row-1">
+                {row1Keys.map(function (key, idx) {
+                  var handleKeyClick = function () { handleVirtualKeyPress(key); };
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={handleKeyClick}
+                      className="key-button"
+                      style={{ left: (idx * 70) + "px", width: "64px" }}
+                    >
+                      {key}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Row 2 */}
+              <div className="keyboard-row keyboard-row-2">
+                {row2Keys.map(function (key, idx) {
+                  var handleKeyClick = function () { handleVirtualKeyPress(key); };
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={handleKeyClick}
+                      className="key-button"
+                      style={{ left: (35 + idx * 70) + "px", width: "64px" }}
+                    >
+                      {key}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Row 3 */}
+              <div className="keyboard-row keyboard-row-3">
+                {row3Keys.map(function (key, idx) {
+                  var handleKeyClick = function () { handleVirtualKeyPress(key); };
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={handleKeyClick}
+                      className="key-button"
+                      style={{ left: (idx * 70) + "px", width: "64px" }}
+                    >
+                      {key}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={function () { handleVirtualKeyPress("BACKSPACE"); }}
+                  className="key-button key-button-del"
+                  style={{ left: "490px", width: "204px" }}
+                >
+                  DEL
+                </button>
+              </div>
+
+              {/* Row 4 */}
+              <div className="keyboard-row keyboard-row-4">
+                <button
+                  type="button"
+                  onClick={function () { setIsNumbers(!isNumbers); }}
+                  className="key-button key-button-mode"
+                  style={{ left: "0px", width: "100px" }}
+                >
+                  {isNumbers ? "ABC" : "123"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={function () { handleVirtualKeyPress("CLEAR"); }}
+                  className="key-button key-button-clear"
+                  style={{ left: "106px", width: "100px" }}
+                >
+                  CLEAR
+                </button>
+
+                <button
+                  type="button"
+                  onClick={function () { handleVirtualKeyPress("SPACE"); }}
+                  className="key-button key-button-space"
+                  style={{ left: "212px", width: "376px" }}
+                >
+                  SPACE
+                </button>
+
+                <button
+                  type="submit"
+                  onClick={function () { handleVirtualKeyPress("CARI"); }}
+                  className="key-button key-button-search"
+                  style={{ left: "594px", width: "100px" }}
+                >
+                  SEARCH
+                </button>
               </div>
             </div>
+
+            {searchError ? (
+              <div className="error-banner-legacy" style={{ position: "absolute", bottom: "10px", left: "37px", width: "694px" }}>
+                {searchError}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          /* Standard Playing Panel with Left Metadata and Right Vinyl Record */
+          <div style={{ position: "relative", width: "768px", height: "512px" }}>
+            
+            {/* Left Control Panel */}
+            <div className="control-panel-left">
+              {/* Minimal Search Trigger */}
+              <div className="mini-search-container">
+                <Search className="mini-search-icon" style={{ width: "14px", height: "14px" }} />
+                <input
+                  ref={mainSearchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={function (e) { setSearchQuery(e.target.value); }}
+                  onFocus={function () { setIsKeyboardActive(true); }}
+                  placeholder="PASTE YOUTUBE LINK OR VIDEO ID..."
+                  className="mini-search-input"
+                />
+                {isSearching ? (
+                  <Loader2 className="mini-search-clear animate-spin" style={{ width: "14px", height: "14px" }} />
+                ) : searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={function () { setSearchQuery(""); }}
+                    className="mini-search-clear"
+                  >
+                    <X style={{ width: "14px", height: "14px" }} />
+                  </button>
+                ) : null}
+              </div>
+
+              {searchError ? (
+                <div style={{ position: "absolute", left: "0px", top: "42px", color: "#f87171", fontFamily: "monospace", fontSize: "9px", letterSpacing: "1px", textTransform: "uppercase" }}>
+                  {searchError}
+                </div>
+              ) : null}
+
+              {/* Current Track Metadata details */}
+              <div className="metadata-container">
+                <h1 className="metadata-title">{currentTrack.title}</h1>
+                <p className="metadata-artist">{currentTrack.artist}</p>
+
+                <button
+                  onClick={function () { setShowQueue(!showQueue); }}
+                  className={"queue-toggle-btn" + (showQueue ? " active" : "")}
+                  title="Show Playlist"
+                >
+                  <ListMusic style={{ width: "18px", height: "18px" }} />
+                </button>
+              </div>
+
+              {/* Timing info */}
+              <div className="time-display-container">
+                <span>{formatTime(currentTime)}</span>
+                <span style={{ margin: "0 10px", opacity: 0.3 }}>/</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+
+              {/* Bottom playback buttons */}
+              <div className="playback-button-row">
+                {/* Prev button */}
+                <button
+                  onClick={handlePrev}
+                  className="playback-btn playback-btn-prev"
+                  disabled={!isPlayerReady}
+                  title="Previous"
+                >
+                  <SkipBack style={{ width: "20px", height: "20px" }} />
+                </button>
+
+                {/* Play/Pause Button */}
+                <button
+                  onClick={handlePlayPause}
+                  className="playback-btn"
+                  disabled={!isPlayerReady}
+                  style={{ left: "50px", backgroundColor: "#ffffff", color: "#000000", borderRadius: "50%", width: "44px", height: "44px", top: "-2px" }}
+                  title={isPlaying ? "Pause" : "Play"}
+                >
+                  {isPlaying ? (
+                    <Pause style={{ width: "18px", height: "18px" }} />
+                  ) : (
+                    <Play style={{ width: "18px", height: "18px", marginLeft: "2px" }} />
+                  )}
+                </button>
+
+                {/* Next button */}
+                <button
+                  onClick={handleNext}
+                  className="playback-btn playback-btn-next"
+                  disabled={!isPlayerReady}
+                  style={{ left: "105px" }}
+                  title="Next"
+                >
+                  <SkipForward style={{ width: "20px", height: "20px" }} />
+                </button>
+
+                {/* Shuffle indicator button */}
+                <button
+                  onClick={function () { setIsShuffle(!isShuffle); }}
+                  className={"playback-btn playback-btn-shuffle" + (isShuffle ? " active" : "")}
+                  style={{ left: "165px" }}
+                  title="Shuffle"
+                >
+                  <Shuffle style={{ width: "14px", height: "14px" }} />
+                  {isShuffle ? <span className="dot-indicator" /> : null}
+                </button>
+
+                {/* Repeat indicator button */}
+                <button
+                  onClick={function () { setIsRepeat(!isRepeat); }}
+                  className={"playback-btn playback-btn-repeat" + (isRepeat ? " active" : "")}
+                  style={{ left: "215px" }}
+                  title="Repeat"
+                >
+                  <Repeat style={{ width: "14px", height: "14px" }} />
+                  {isRepeat ? <span className="dot-indicator" /> : null}
+                </button>
+
+                {/* Mute and volume slider */}
+                <div className="volume-group" style={{ left: "270px" }}>
+                  <button
+                    onClick={handleMuteToggle}
+                    className="playback-btn"
+                    style={{ position: "relative", width: "30px", height: "30px" }}
+                    title={isMuted ? "Unmute" : "Mute"}
+                  >
+                    {isMuted ? <VolumeX style={{ width: "16px", height: "16px" }} /> : <Volume2 style={{ width: "16px", height: "16px" }} />}
+                  </button>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={volume}
+                    onChange={handleVolumeChange}
+                    className="volume-slider"
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Vinyl Panel */}
+            <div className="vinyl-panel-right">
+              <VinylRecord
+                isPlaying={isPlaying}
+                currentTrack={currentTrack}
+                onPressStart={handlePlayStart}
+                onPressEnd={handlePlayEnd}
+              />
+            </div>
+
+          </div>
+        )}
+
+        {/* Sliding queue/playlist drawer */}
+        <div
+          className="queue-drawer-panel"
+          style={{
+            display: showQueue ? "block" : "none",
+            transform: showQueue ? "translateY(0)" : "translateY(100%)",
+            WebkitTransform: showQueue ? "translateY(0)" : "translateY(100%)"
+          }}
+        >
+          <div className="queue-drawer-header">
+            <div style={{ position: "absolute", left: "0px", top: "5px" }}>
+              <span className="queue-drawer-title">
+                Playlist Queue ({playlist.length})
+              </span>
+              {playlist.length > 0 ? (
+                <button
+                  onClick={handleClearPlaylist}
+                  className="queue-clear-btn"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            <button
+              onClick={function () { setShowQueue(false); }}
+              className="queue-drawer-close-btn"
+              style={{ padding: "8px", background: "transparent", border: "none" }}
+            >
+              <X style={{ width: "16px", height: "16px" }} />
+            </button>
           </div>
 
+          <div className="queue-drawer-list">
+            {playlist.length === 0 ? (
+              <div className="queue-empty-state">
+                <ListMusic style={{ width: "36px", height: "36px", color: "rgba(255,255,255,0.1)" }} />
+                <p className="queue-empty-text-1">Queue Empty</p>
+                <p className="queue-empty-text-2">Search for songs to add them to the queue.</p>
+              </div>
+            ) : (
+              playlist.map(function (track, idx) {
+                var isActive = idx === currentTrackIndex;
+                var handleItemClick = function () {
+                  setCurrentTrackIndex(idx);
+                  setShowQueue(false);
+                  setIsPlaying(true);
+                };
+                var handleRemoveClick = function (e: any) {
+                  handleRemoveTrack(idx, e);
+                };
+                var itemThumbnail = track.thumbnail ? track.thumbnail.replace("img.youtube.com", "i.ytimg.com") : "";
+
+                return (
+                  <div
+                    key={track.videoId + "-" + idx}
+                    className={"queue-item" + (isActive ? " active" : "")}
+                  >
+                    <button
+                      type="button"
+                      onClick={handleItemClick}
+                      className="queue-item-left"
+                    >
+                      <div className="queue-item-thumbnail-container">
+                        {itemThumbnail ? (
+                          <img
+                            src={itemThumbnail}
+                            alt=""
+                            onError={function (e) {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
+                            }}
+                            className="queue-item-thumbnail"
+                          />
+                        ) : (
+                          <div className="queue-item-thumbnail" style={{ backgroundColor: "#1c1c1c" }} />
+                        )}
+                        {isActive && isPlaying ? (
+                          <div className="queue-active-overlay">
+                            <span className="flex-legacy" style={{ alignItems: "flex-end", height: "12px" }}>
+                              <span className="queue-soundwave-bar" style={{ height: "12px" }} />
+                              <span className="queue-soundwave-bar" style={{ height: "8px" }} />
+                              <span className="queue-soundwave-bar" style={{ height: "10px" }} />
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div>
+                        <div className={"queue-item-title" + (isActive ? " active" : "")}>
+                          {track.title}
+                        </div>
+                        <div className="queue-item-artist">
+                          {track.artist}
+                        </div>
+                      </div>
+                    </button>
+
+                    <div className="queue-item-actions">
+                      {isActive ? (
+                        <span className="queue-status-badge">
+                          Now Playing
+                        </span>
+                      ) : (
+                        <span className="queue-status-badge" style={{ opacity: 0.5 }}>
+                          Queue
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleRemoveClick}
+                        className="queue-remove-btn"
+                      >
+                        <Trash2 style={{ width: "14px", height: "14px" }} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   );

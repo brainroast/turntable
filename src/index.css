@@ -1,1 +1,1047 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* Basic CSS Resets and Fonts for ancient Safari 9 */
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body, html {
+  width: 768px;
+  height: 1024px;
+  background-color: #000000;
+  color: #ffffff;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Scrollbar legacy styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+/* Animations */
+@-webkit-keyframes spin {
+  from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
+  to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+}
+@keyframes spin {
+  from { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
+  to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+}
+
+.animate-spin-legacy {
+  -webkit-animation: spin 10s linear infinite;
+  animation: spin 10s linear infinite;
+}
+
+/* Fullscreen app wrapper */
+.app-wrapper {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 768px;
+  height: 1024px;
+  background-color: #000000;
+  overflow: hidden;
+}
+
+/* 50% Top area: strictly pitch black and empty */
+.top-area-empty {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 768px;
+  height: 512px;
+  background-color: #000000;
+  pointer-events: none;
+}
+
+/* 50% Bottom area active container */
+.bottom-area-container {
+  position: absolute;
+  left: 0px;
+  top: 512px;
+  width: 768px;
+  height: 512px;
+  background-color: #0a0a0a;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+/* Progress and Seek Bar */
+.progress-seek-bar {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 768px;
+  height: 12px;
+  cursor: pointer;
+  z-index: 200;
+}
+
+.seek-track {
+  position: absolute;
+  left: 0px;
+  top: 5px;
+  width: 768px;
+  height: 2px;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.seek-fill {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  height: 100%;
+  background-color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+}
+
+/* Control Panel (Left column in Bottom area) */
+.control-panel-left {
+  position: absolute;
+  left: 37px;
+  top: 35px;
+  width: 340px;
+  height: 440px;
+}
+
+/* Vinyl Panel (Right column in Bottom area) */
+.vinyl-panel-right {
+  position: absolute;
+  left: 405px;
+  top: 35px;
+  width: 326px;
+  height: 440px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+/* Legacy Flexbox Helper classes */
+.flex-legacy {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+}
+
+.flex-align-center {
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+.flex-justify-between {
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+}
+
+/* Mini search input in left panel */
+.mini-search-container {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 340px;
+  height: 35px;
+}
+
+.mini-search-input {
+  width: 100%;
+  height: 30px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cccccc;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding-left: 24px;
+  padding-right: 24px;
+  outline: none;
+}
+
+.mini-search-input:focus {
+  border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+.mini-search-icon {
+  position: absolute;
+  left: 0px;
+  top: 8px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.mini-search-clear {
+  position: absolute;
+  right: 0px;
+  top: 6px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+}
+
+/* Metadata Text */
+.metadata-container {
+  position: absolute;
+  left: 0px;
+  top: 75px;
+  width: 340px;
+  height: 140px;
+}
+
+.metadata-title {
+  font-size: 28px;
+  color: #ffffff;
+  font-weight: 300;
+  line-height: 1.25;
+  width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metadata-artist {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 8px;
+  width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-toggle-btn {
+  position: absolute;
+  right: 0px;
+  top: 10px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: transparent;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.4);
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  cursor: pointer;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.queue-toggle-btn.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Time display */
+.time-display-container {
+  position: absolute;
+  left: 0px;
+  top: 235px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+
+/* Playback buttons layout */
+.playback-button-row {
+  position: absolute;
+  left: 0px;
+  top: 265px;
+  width: 340px;
+  height: 50px;
+}
+
+.playback-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  position: absolute;
+  height: 40px;
+  width: 40px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+
+.playback-btn:active {
+  color: #ffffff;
+}
+
+.playback-btn-prev { left: 0px; }
+.playback-btn-next { left: 50px; }
+
+.playback-btn-shuffle {
+  left: 110px;
+  color: rgba(255, 255, 255, 0.15);
+}
+.playback-btn-shuffle.active {
+  color: #ffffff;
+}
+.dot-indicator {
+  position: absolute;
+  bottom: -4px;
+  width: 4px;
+  height: 4px;
+  background-color: #ffffff;
+  border-radius: 50%;
+}
+
+.playback-btn-repeat {
+  left: 160px;
+  color: rgba(255, 255, 255, 0.15);
+}
+.playback-btn-repeat.active {
+  color: #ffffff;
+}
+
+/* Volume control container */
+.volume-group {
+  position: absolute;
+  left: 225px;
+  top: 0px;
+  width: 115px;
+  height: 40px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+.volume-slider {
+  width: 55px;
+  height: 3px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: none;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+/* Virtual Keyboard UI (Takes full 768x512 bottom area) */
+.keyboard-panel {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 768px;
+  height: 512px;
+  background-color: #070707;
+  padding: 15px 37px 15px 37px;
+}
+
+/* Keyboard Search Bar header */
+.keyboard-search-header {
+  position: absolute;
+  left: 37px;
+  top: 15px;
+  width: 694px;
+  height: 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.keyboard-search-input {
+  width: 360px;
+  height: 35px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  padding-left: 28px;
+  outline: none;
+}
+
+.keyboard-search-icon {
+  position: absolute;
+  left: 0px;
+  top: 10px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.keyboard-mode-toggle {
+  position: absolute;
+  left: 390px;
+  top: 5px;
+  height: 28px;
+  width: 200px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 1px;
+}
+
+.kbd-toggle-btn {
+  width: 50%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.kbd-toggle-btn.active {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.keyboard-close-header-btn {
+  position: absolute;
+  right: 0px;
+  top: 5px;
+  height: 26px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  padding: 0 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+/* Horizontal Suggestions Carousel */
+.suggestions-carousel {
+  position: absolute;
+  left: 37px;
+  top: 68px;
+  width: 694px;
+  height: 35px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.suggestion-chip {
+  display: inline-block;
+  padding: 6px 14px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 100px;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-right: 8px;
+  cursor: pointer;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.suggestion-chip:active {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+/* Keys Area (Rows of buttons) */
+.keyboard-keys-area {
+  position: absolute;
+  left: 37px;
+  top: 115px;
+  width: 694px;
+  height: 250px;
+}
+
+.keyboard-row {
+  position: absolute;
+  left: 0px;
+  width: 694px;
+  height: 48px;
+}
+
+.keyboard-row-1 { top: 0px; }
+.keyboard-row-2 { top: 56px; }
+.keyboard-row-3 { top: 112px; }
+.keyboard-row-4 { top: 168px; }
+
+.key-button {
+  position: absolute;
+  height: 45px;
+  background-color: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  font-weight: 500;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.key-button:active {
+  background-color: #222222;
+  color: #ffffff;
+}
+
+.key-button-del {
+  background-color: #2b1111;
+  border-color: rgba(139, 0, 0, 0.2);
+  color: #ff6b6b;
+  font-size: 12px;
+}
+
+.key-button-del:active {
+  background-color: #3d1414;
+}
+
+.key-button-mode {
+  background-color: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+}
+
+.key-button-clear {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+}
+
+.key-button-space {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.key-button-search {
+  background-color: #ffffff;
+  color: #000000;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.key-button-search:active {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Search results screen (overrides bottom controls, 768x512) */
+.search-results-panel {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 768px;
+  height: 512px;
+  background-color: #070707;
+  padding: 15px 37px;
+  z-index: 250;
+}
+
+.search-results-header {
+  position: absolute;
+  left: 37px;
+  top: 15px;
+  width: 694px;
+  height: 50px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-results-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.search-results-subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+.search-results-close-btn {
+  position: absolute;
+  right: 0px;
+  top: 5px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+.search-results-list {
+  position: absolute;
+  left: 37px;
+  top: 75px;
+  width: 694px;
+  height: 410px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  width: 100%;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  padding: 8px 15px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+}
+
+.search-result-info {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  width: 430px;
+}
+
+.search-result-thumbnail {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background-color: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  object-fit: cover;
+  margin-right: 15px;
+}
+
+.search-result-text-container {
+  width: 350px;
+}
+
+.search-result-title {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.search-result-artist {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-result-actions {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+.search-play-btn {
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.search-play-btn:active {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.search-queue-btn {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+.search-queue-btn:active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.search-queue-status {
+  background-color: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  border-radius: 6px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+/* Error Banner inside keyboard panel */
+.error-banner-legacy {
+  color: #f87171;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  line-height: 1.4;
+  background-color: rgba(127, 29, 29, 0.3);
+  border: 1px solid rgba(127, 29, 29, 0.5);
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+/* Sliding Queue Playlist Drawer (768px wide) */
+.queue-drawer-panel {
+  position: absolute;
+  left: 0px;
+  top: 12px;
+  width: 768px;
+  height: 500px;
+  background-color: #070707;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 300;
+  -webkit-transition: -webkit-transform 0.3s ease-out;
+  transition: transform 0.3s ease-out;
+}
+
+.queue-drawer-header {
+  position: absolute;
+  left: 37px;
+  top: 15px;
+  width: 694px;
+  height: 45px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.queue-drawer-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+}
+
+.queue-clear-btn {
+  padding: 4px 10px;
+  background-color: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 4px;
+  color: #f87171;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-left: 15px;
+}
+
+.queue-clear-btn:active {
+  background-color: rgba(220, 38, 38, 0.3);
+}
+
+.queue-drawer-close-btn {
+  position: absolute;
+  right: 0px;
+  top: 2px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+}
+
+.queue-drawer-list {
+  position: absolute;
+  left: 37px;
+  top: 70px;
+  width: 694px;
+  height: 410px;
+  overflow-y: auto;
+}
+
+.queue-empty-state {
+  height: 200px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  text-align: center;
+}
+
+.queue-empty-text-1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.queue-empty-text-2 {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.15);
+  margin-top: 4px;
+}
+
+.queue-item {
+  width: 100%;
+  height: 52px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  padding: 4px 10px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+.queue-item.active {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.queue-item-left {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  width: 500px;
+}
+
+.queue-item-thumbnail-container {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  background-color: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  margin-right: 15px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+
+.queue-item-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.queue-active-overlay {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: end;
+  -webkit-align-items: flex-end;
+  align-items: flex-end;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  padding-bottom: 8px;
+}
+
+.queue-soundwave-bar {
+  width: 2px;
+  background-color: #ffffff;
+  margin: 0 1px;
+}
+
+.queue-item-title {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-item-title.active {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.queue-item-artist {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-item-actions {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+.queue-status-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.queue-remove-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  margin-left: 15px;
+}
+
+.queue-remove-btn:active {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}

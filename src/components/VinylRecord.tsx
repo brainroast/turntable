@@ -1,123 +1,153 @@
 import React from "react";
 import { Track } from "../types";
 
-interface VinylRecordProps {
+export function VinylRecord(props: {
   isPlaying: boolean;
   currentTrack: Track;
   onPressStart: () => void;
   onPressEnd: () => void;
-}
+}) {
+  var isPlaying = props.isPlaying;
+  var currentTrack = props.currentTrack;
+  var onPressStart = props.onPressStart;
+  var onPressEnd = props.onPressEnd;
 
-export const VinylRecord: React.FC<VinylRecordProps> = ({
-  isPlaying,
-  currentTrack,
-  onPressStart,
-  onPressEnd,
-}) => {
+  var rotationStyle = {
+    position: "relative" as "relative",
+    width: "290px",
+    height: "290px",
+    borderRadius: "50%",
+    border: "1px solid rgba(255,255,255,0.05)",
+    WebkitBoxPack: "center" as "center",
+    WebkitJustifyContent: "center" as "center",
+    justifyContent: "center" as "center",
+    WebkitBoxAlign: "center" as "center",
+    WebkitAlignItems: "center" as "center",
+    alignItems: "center" as "center",
+    cursor: "pointer" as "pointer",
+    background: "repeating-radial-gradient(circle, #1f1f1f, #111111 1px, #070707 3px, #1a1a1a 4px)",
+    backgroundColor: "#111111",
+    WebkitAnimation: isPlaying ? "spin 10s linear infinite" : "none",
+    animation: isPlaying ? "spin 10s linear infinite" : "none",
+    boxShadow: isPlaying
+      ? "inset 0 0 45px rgba(0,0,0,1), 0 0 40px rgba(255,255,255,0.04), 0 20px 60px rgba(0,0,0,0.95)"
+      : "inset 0 0 45px rgba(0,0,0,1), 0 12px 40px rgba(0,0,0,0.9)",
+    WebkitBoxShadow: isPlaying
+      ? "inset 0 0 45px rgba(0,0,0,1), 0 0 40px rgba(255,255,255,0.04), 0 20px 60px rgba(0,0,0,0.95)"
+      : "inset 0 0 45px rgba(0,0,0,1), 0 12px 40px rgba(0,0,0,0.9)"
+  };
+
+  var outerShadowStyle = {
+    position: "absolute" as "absolute",
+    width: "310px",
+    height: "310px",
+    borderRadius: "50%",
+    backgroundColor: "rgba(0,0,0,0.8)",
+    filter: "blur(20px)",
+    WebkitFilter: "blur(20px)",
+    pointerEvents: "none" as "none"
+  };
+
+  var centerLabelStyle = {
+    position: "absolute" as "absolute",
+    width: "140px",
+    height: "140px",
+    borderRadius: "50%",
+    backgroundColor: "#050505",
+    border: "4px solid #141414",
+    overflow: "hidden" as "hidden",
+    zIndex: 10,
+    pointerEvents: "none" as "none"
+  };
+
+  var shineStyle = {
+    position: "absolute" as "absolute",
+    left: "0px",
+    top: "0px",
+    width: "100%",
+    height: "100%",
+    borderRadius: "50%",
+    pointerEvents: "none" as "none",
+    opacity: 0.35,
+    background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.4) 100%)"
+  };
+
+  var imageStyle = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover" as "cover",
+    borderRadius: "50%"
+  };
+
+  var emptyArtStyle = {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#1c1c1c",
+    WebkitBoxAlign: "center" as "center",
+    WebkitAlignItems: "center" as "center",
+    alignItems: "center" as "center",
+    WebkitBoxPack: "center" as "center",
+    WebkitJustifyContent: "center" as "center",
+    justifyContent: "center" as "center"
+  };
+
+  var emptyTextStyle = {
+    fontFamily: "monospace",
+    fontSize: "9px",
+    letterSpacing: "1.5px",
+    color: "#666666"
+  };
+
+  var handlePointerDown = function (e: React.PointerEvent) {
+    e.preventDefault();
+    onPressStart();
+  };
+
+  var handlePointerUp = function () {
+    onPressEnd();
+  };
+
+  var imageUrl = currentTrack.thumbnail
+    ? currentTrack.thumbnail.replace("img.youtube.com", "i.ytimg.com")
+    : "";
+
   return (
-    <div className="relative flex items-center justify-center select-none w-full h-full max-w-full max-h-full aspect-square">
-      {/* Vinyl Outer Shadow/Glow (Proportional to size) */}
-      <div className={`absolute w-[104%] h-[104%] rounded-full bg-black/80 blur-3xl pointer-events-none transition-all duration-1000 ${
-        isPlaying ? "scale-105 opacity-90" : "scale-100 opacity-70"
-      }`} />
+    <div className="flex-legacy" style={{ position: "relative", width: "320px", height: "320px", WebkitBoxPack: "center", WebkitJustifyContent: "center", justifyContent: "center", WebkitBoxAlign: "center", WebkitAlignItems: "center", alignItems: "center" }}>
+      <div style={outerShadowStyle} />
 
-      {/* Vinyl Body - Highly Tactile & Responsive */}
       <div
-        onPointerDown={(e) => {
-          e.preventDefault();
-          onPressStart();
-        }}
-        onPointerUp={onPressEnd}
-        onPointerLeave={onPressEnd}
-        onPointerCancel={onPressEnd}
-        className="relative w-full h-full max-w-[250px] max-h-[250px] sm:max-w-[340px] sm:max-h-[340px] md:max-w-[420px] md:max-h-[420px] lg:max-w-[480px] lg:max-h-[480px] xl:max-w-[540px] xl:max-h-[540px] aspect-square rounded-full border border-neutral-800/40 flex items-center justify-center transition-all duration-1000 ease-out animate-[spin_10s_linear_infinite] cursor-grab active:cursor-grabbing touch-none select-none pointer-events-auto"
-        style={{
-          background: "repeating-radial-gradient(circle, #1f1f1f, #111111 1px, #070707 3px, #1a1a1a 4px)",
-          animationPlayState: isPlaying ? "running" : "paused",
-          boxShadow: isPlaying 
-            ? "inset 0 0 45px rgba(0,0,0,1), 0 0 40px rgba(255,255,255,0.04), 0 20px 60px rgba(0,0,0,0.95)"
-            : "inset 0 0 45px rgba(0,0,0,1), 0 12px 40px rgba(0,0,0,0.9)",
-        }}
-        title="HOLD TO PLAY / TEKAN DAN TAHAN UNTUK MEMUTAR"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        className="flex-legacy"
+        style={rotationStyle}
+        title="TEKAN DAN TAHAN UNTUK MEMUTAR"
       >
-        {/* Grooves & Texture Overlay */}
-        <div className="absolute inset-0 rounded-full bg-black/30 mix-blend-overlay pointer-events-none" />
+        <div style={shineStyle} />
 
-        {/* Dynamic Conic Light Shine (Gives 3D reflective feel) */}
-        <div
-          className="absolute inset-0 rounded-full opacity-40 mix-blend-screen pointer-events-none"
-          style={{
-            background: `conic-gradient(
-              from 0deg,
-              transparent 0%,
-              rgba(255, 255, 255, 0.12) 12%,
-              transparent 24%,
-              transparent 50%,
-              rgba(255, 255, 255, 0.12) 62%,
-              transparent 74%,
-              transparent 100%
-            )`,
-          }}
-        />
-
-        {/* Center Label (Album Art - Redesigned to be bigger, ultra-premium and with NO HOLES) */}
-        <div 
-          className="absolute w-[48%] h-[48%] rounded-full bg-neutral-950 flex items-center justify-center overflow-hidden z-10 pointer-events-none transition-all duration-500"
-          style={{
-            boxShadow: "0 6px 25px rgba(0,0,0,0.85), inset 0 0 20px rgba(0,0,0,0.9)",
-            border: "4px solid #141414",
-          }}
-        >
-          {currentTrack.thumbnail ? (
-            <div className="relative w-full h-full rounded-full overflow-hidden bg-black">
+        <div style={centerLabelStyle}>
+          {imageUrl ? (
+            <div style={{ position: "relative", width: "100%", height: "100%" }}>
               <img
-                src={currentTrack.thumbnail.replace("img.youtube.com", "i.ytimg.com")}
-                alt={currentTrack.title}
-                onError={(e) => {
+                src={imageUrl}
+                alt=""
+                style={imageStyle}
+                onError={function (e) {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
                 }}
-                className="w-full h-full object-cover rounded-full select-none scale-105"
               />
-              
-              {/* Premium metallic brass/gold accent ring borders for physical luxury vibe */}
-              <div className="absolute inset-0 rounded-full border-[3px] border-amber-500/20 pointer-events-none" />
-              <div className="absolute inset-[6px] rounded-full border border-black/40 pointer-events-none" />
-              <div className="absolute inset-[12px] rounded-full border border-white/5 pointer-events-none" />
-              
-              {/* Dynamic shining glass reflection overlay 1 (Conic gloss) */}
-              <div 
-                className="absolute inset-0 opacity-30 pointer-events-none mix-blend-overlay"
-                style={{
-                  background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.5) 100%)"
-                }}
-              />
-              
-              {/* Dynamic shining glass reflection overlay 2 (Radial gloss highlight) */}
-              <div 
-                className="absolute inset-0 opacity-20 pointer-events-none mix-blend-screen"
-                style={{
-                  background: "radial-gradient(circle at 35% 35%, rgba(255,255,255,0.7) 0%, transparent 55%)"
-                }}
-              />
-
-              {/* Concentric micro record lines on the label for realistic physics tactile effect */}
-              <div 
-                className="absolute inset-0 rounded-full pointer-events-none opacity-[0.15]"
-                style={{
-                  background: "repeating-radial-gradient(circle, transparent, transparent 4px, rgba(255,255,255,0.3) 5px)"
-                }}
-              />
+              <div style={{ position: "absolute", left: "0px", top: "0px", width: "100%", height: "100%", borderRadius: "50%", border: "2px solid rgba(245, 158, 11, 0.2)", pointerEvents: "none" }} />
+              <div style={{ position: "absolute", left: "0px", top: "0px", width: "100%", height: "100%", borderRadius: "50%", background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15) 0%, transparent 60%)", pointerEvents: "none" }} />
             </div>
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-950 flex items-center justify-center">
-              <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase">NO ART</span>
+            <div className="flex-legacy" style={emptyArtStyle}>
+              <span style={emptyTextStyle}>NO ART</span>
             </div>
           )}
         </div>
       </div>
     </div>
   );
-};
-
-
+}
