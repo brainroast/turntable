@@ -35,7 +35,7 @@ export function VinylRecord(props: {
     WebkitBoxShadow: isPlaying
       ? "inset 0 0 45px rgba(0,0,0,1), 0 0 40px rgba(255,255,255,0.04), 0 20px 60px rgba(0,0,0,0.95)"
       : "inset 0 0 45px rgba(0,0,0,1), 0 12px 40px rgba(0,0,0,0.9)",
-    WebkitTapHighlightColor: "transparent"
+    WebkitTapHighlightColor: "rgba(0,0,0,0)"
   };
 
   var outerShadowStyle = {
@@ -128,11 +128,8 @@ export function VinylRecord(props: {
   };
 
   var handlePressStart = function (e: any) {
+    // We change to single toggle press for iOS support
     onPressStart();
-  };
-
-  var handlePressEnd = function (e: any) {
-    onPressEnd();
   };
 
   var imageUrl = currentTrack.thumbnail ? currentTrack.thumbnail.replace("http://", "https://") : "";
@@ -158,16 +155,11 @@ export function VinylRecord(props: {
   };
 
   return (
-    <div className="flex-legacy" style={{ position: "relative", width: "420px", height: "420px", WebkitBoxPack: "center", WebkitJustifyContent: "center", justifyContent: "center", WebkitBoxAlign: "center", WebkitAlignItems: "center", alignItems: "center", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTapHighlightColor: "transparent" }}>
+    <div className="flex-legacy" style={{ position: "relative", width: "420px", height: "420px", WebkitBoxPack: "center", WebkitJustifyContent: "center", justifyContent: "center", WebkitBoxAlign: "center", WebkitAlignItems: "center", alignItems: "center", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTapHighlightColor: "rgba(0,0,0,0)" }}>
       <div style={outerShadowStyle} />
 
       <div
-        onTouchStart={handlePressStart}
-        onTouchEnd={handlePressEnd}
-        onTouchCancel={handlePressEnd}
-        onMouseDown={handlePressStart}
-        onMouseUp={handlePressEnd}
-        onMouseLeave={handlePressEnd}
+        onClick={handlePressStart}
         className="flex-legacy"
         style={{
           ...rotationStyle,
@@ -175,7 +167,7 @@ export function VinylRecord(props: {
           WebkitUserSelect: "none",
           userSelect: "none"
         }}
-        title="TEKAN DAN TAHAN UNTUK MEMUTAR"
+        title="TEKAN UNTUK MEMUTAR/JEDA"
       >
         <div style={shineStyle} />
 

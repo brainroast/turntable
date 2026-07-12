@@ -37,6 +37,68 @@ function cleanString(str: string): string {
     .replace(/ - Topic$/i, "");
 }
 
+function fetchCompat(url: string, options: any = {}): Promise<any> {
+  return new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    var method = options.method || "GET";
+    xhr.open(method, url, true);
+
+    if (options.headers) {
+      for (var key in options.headers) {
+        if (options.headers.hasOwnProperty(key)) {
+          xhr.setRequestHeader(key, options.headers[key]);
+        }
+      }
+    }
+
+    xhr.timeout = 10000;
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        // Resolve early if status is 0 but responseText exists (some proxy cases)
+        var isOk = (xhr.status >= 200 && xhr.status < 300) || (xhr.status === 0 && xhr.responseText);
+        
+        var response = {
+          ok: isOk,
+          status: xhr.status,
+          headers: {
+            get: function (headerName: string) {
+              return xhr.getResponseHeader(headerName);
+            }
+          },
+          text: function () {
+            return Promise.resolve(xhr.responseText);
+          },
+          json: function () {
+            return new Promise(function (res, rej) {
+              try {
+                res(JSON.parse(xhr.responseText));
+              } catch (e) {
+                rej(e);
+              }
+            });
+          }
+        };
+        resolve(response);
+      }
+    };
+
+    xhr.onerror = function () {
+      reject(new Error("XHR Network Error"));
+    };
+
+    xhr.ontimeout = function () {
+      reject(new Error("XHR Timeout"));
+    };
+
+    if (options.body) {
+      xhr.send(options.body);
+    } else {
+      xhr.send();
+    }
+  });
+}
+
 function filterOriginalArtistTracks(results: any[]): any[] {
   var strictResults = results.filter(function (r) {
     var t = r.title.toLowerCase();
@@ -134,7 +196,7 @@ async function originalScraperFallback(query: string, mode: "song" | "artist" = 
     var proxyFn = proxies[i];
     try {
       var proxyUrl = proxyUrl = proxyFn(targetUrl);
-      var response = await fetch(proxyUrl);
+      var response = await fetchCompat(proxyUrl);
       if (!response.ok) {
         throw new Error("Proxy status " + response.status);
       }
@@ -855,7 +917,7 @@ export default function App() {
 
     var backendSearch = async function (): Promise<any[]> {
       var apiBase = import.meta.env.VITE_API_URL || "";
-      var res = await fetch(apiBase + "/api/search", {
+      var res = await fetchCompat(apiBase + "/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: query, mode: searchMode }),
@@ -1381,7 +1443,7 @@ export default function App() {
               <VinylRecord
                 isPlaying={isPlaying}
                 currentTrack={currentTrack}
-                onPressStart={handlePlayStart}
+                onPressStart={handlePlayPause}
                 onPressEnd={handlePlayEnd}
               />
             </div>
