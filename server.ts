@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
+import { spawn } from "child_process";
 
 dotenv.config();
 
@@ -278,8 +279,8 @@ app.get("/api/download/:videoId", async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename="${videoId}.webm"`);
     res.setHeader("Content-Type", "audio/webm");
 
-    const { spawn } = require('child_process');
-    const ytDlp = spawn('./yt-dlp', ['-f', 'bestaudio', '-o', '-', url]);
+    const ytDlpPath = path.join(process.cwd(), 'yt-dlp');
+    const ytDlp = spawn(ytDlpPath, ['-f', 'bestaudio', '-o', '-', url]);
 
     ytDlp.stdout.pipe(res);
 
