@@ -1009,7 +1009,7 @@ export default function App() {
             return t;
           });
         });
-        alert("Failed to download mp3 for " + track.title);
+        alert("Failed to download audio for " + track.title);
       }
     } else {
       // The useEffect will handle playing since currentTrackIndex was set
@@ -1133,8 +1133,12 @@ export default function App() {
                           src={trackThumbnail}
                           alt=""
                           onError={function (e) {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
+                            if (e.currentTarget.src.includes("hqdefault.jpg")) {
+                              e.currentTarget.src = e.currentTarget.src.replace("hqdefault.jpg", "mqdefault.jpg");
+                            } else {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
+                            }
                           }}
                           className="search-result-thumbnail"
                         />
@@ -1525,8 +1529,12 @@ export default function App() {
                             src={itemThumbnail}
                             alt=""
                             onError={function (e) {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
+                              if (e.currentTarget.src.includes("hqdefault.jpg")) {
+                                e.currentTarget.src = e.currentTarget.src.replace("hqdefault.jpg", "mqdefault.jpg");
+                              } else {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop";
+                              }
                             }}
                             className="queue-item-thumbnail"
                           />

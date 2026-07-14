@@ -185,8 +185,13 @@ export function VinylRecord(props: {
                   userSelect: "none",
                   WebkitTouchCallout: "none"
                 }}
-                onError={function () {
-                  setHasImgError(true);
+                onError={function (e) {
+                  var target = e.currentTarget;
+                  if (target.src.includes("hqdefault.jpg")) {
+                    target.src = target.src.replace("hqdefault.jpg", "mqdefault.jpg");
+                  } else {
+                    setHasImgError(true);
+                  }
                 }}
               />
               <div style={{ position: "absolute", left: "0px", top: "0px", width: "100%", height: "100%", borderRadius: "50%", border: "2px solid rgba(245, 158, 11, 0.2)", pointerEvents: "none" }} />

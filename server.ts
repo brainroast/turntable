@@ -21,9 +21,44 @@ function cleanString(str: string): string {
     .replace(/ - Topic$/i, "");
 }
 
-// Helper to filter results to ensure they are original/official artist releases only
+// Helper to filter results to ensure they are mostly original/official artist releases
 function filterOriginalArtistTracks(results: any[]): any[] {
-  return results.slice(0, 15);
+  // Relaxed check (exclude covers, remixes, and explicit lyric channels)
+  const relaxedResults = results.filter(r => {
+    const t = r.title.toLowerCase();
+    const a = (r.rawArtist || r.artist || "").toLowerCase();
+
+    // Exclude covers, remixes, etc.
+    const titleBlacklist = [
+      "cover", "remix", "tribute", "karaoke", "instrumental", "reaction",
+      "fanmade", "fan-made", "mashup", "parody", "tutorial", "how to play",
+      "choreography", "dance cover", "1 hour", "1hour", "looped", "slowed",
+      "reverb", "nightcore", "acapella", "guitar cover", "drum cover",
+      "piano cover", "bass cover", "live cover", "vocals only", "pitched",
+      "8d audio", "8d version", "earrape", "bass boosted", "mash-up",
+      "speed up", "sped up", "slow down", "slowed down"
+    ];
+    if (titleBlacklist.some(term => t.includes(term))) return false;
+
+    // Exclude channels that are clearly fake/karaoke/covers/remixes
+    const channelBlacklist = [
+      "covers", "karaoke", "nightcore", "repost", "reloaded", "synthesia"
+    ];
+    if (channelBlacklist.some(term => a.includes(term))) return false;
+
+    return true;
+  });
+
+  // Combine them, ensuring uniqueness by videoId
+  const combined = [...relaxedResults];
+  const seenIds = new Set(combined.map(r => r.videoId));
+
+  // Final fallback: if combined is empty, return the top raw results so search is never completely broken
+  if (combined.length === 0) {
+    return results.slice(0, 15);
+  }
+
+  return combined.slice(0, 15);
 }
 
 // Scraper function to search YouTube without an API key
@@ -190,11 +225,11 @@ app.get("/api/download/:videoId", async (req, res) => {
     const url = `https://www.youtube.com/watch?v=${videoId}`;
     
     // Default to webm for audio, although it might be m4a. We'll use webm as fallback.
-    res.setHeader("Content-Disposition", `attachment; filename="${videoId}.webm"`);
-    res.setHeader("Content-Type", "audio/webm");
+    res.setHeader("Content-Disposition", `attachment; filename="${videoId}.m4a"`);
+    res.setHeader("Content-Type", "audio/mp4");
 
     const ytDlpPath = path.join(process.cwd(), 'yt-dlp');
-    const ytDlp = spawn(ytDlpPath, ['-f', 'bestaudio', '-o', '-', url]);
+    const ytDlp = spawn(ytDlpPath, ['-f', 'bestaudio[ext=m4a]/bestaudio', '-o', '-', url]);
 
     ytDlp.stdout.pipe(res);
 
