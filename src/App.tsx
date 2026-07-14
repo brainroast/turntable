@@ -738,7 +738,6 @@ export default function App() {
       nextIdx = (currentTrackIndex + 1) % playlist.length;
     }
     setCurrentTrackIndex(nextIdx);
-    playVideoTrack(playlist[nextIdx]);
   };
 
   var handlePrev = function () {
@@ -754,7 +753,6 @@ export default function App() {
         prevIdx = (currentTrackIndex - 1 + playlist.length) % playlist.length;
       }
       setCurrentTrackIndex(prevIdx);
-      playVideoTrack(playlist[prevIdx]);
     }
   };
 
@@ -1505,7 +1503,6 @@ export default function App() {
                 var handleItemClick = function () {
                   setCurrentTrackIndex(idx);
                   setShowQueue(false);
-                  playVideoTrack(track);
                 };
                 var handleRemoveClick = function (e: any) {
                   handleRemoveTrack(idx, e);

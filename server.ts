@@ -23,101 +23,13 @@ function cleanString(str: string): string {
 
 // Helper to filter results to ensure they are original/official artist releases only
 function filterOriginalArtistTracks(results: any[]): any[] {
-  // Tier 1: Strict original artist check
-  const strictResults = results.filter(r => {
-    const t = r.title.toLowerCase();
-    const a = (r.rawArtist || r.artist || "").toLowerCase();
-
-    // Blacklist check on title
-    const titleBlacklist = [
-      "cover", "remix", "tribute", "karaoke", "instrumental", "reaction",
-      "fanmade", "fan-made", "mashup", "parody", "tutorial", "how to play",
-      "choreography", "dance cover", "1 hour", "1hour", "looped", "slowed",
-      "reverb", "nightcore", "acapella", "guitar cover", "drum cover",
-      "piano cover", "bass cover", "live cover", "vocals only", "pitched",
-      "8d audio", "8d version", "earrape", "bass boosted", "mash-up",
-      "speed up", "sped up", "slow down", "slowed down", "10 hours",
-      "10hours", "loop", "synthesia", "chiptune", "8-bit", "8bit", "vlog background"
-    ];
-    if (titleBlacklist.some(term => t.includes(term))) return false;
-
-    // Blacklist check on channel name
-    const channelBlacklist = [
-      "lyrics", "lyric", "subtitles", "nightcore", "covers", "karaoke",
-      "promotions", "chilled", "vibes", "trap", "nation", "bass boosted",
-      "repost", "reloaded", "synthesia", "tutorial"
-    ];
-    if (channelBlacklist.some(term => a.includes(term))) return false;
-
-    // Strict official indicators
-    const isOfficialSource =
-      a.endsWith(" - topic") ||
-      a.includes("vevo") ||
-      a.includes("official") ||
-      a.includes("records") ||
-      a.includes("music label") ||
-      a.includes("music group") ||
-      a.includes("label") ||
-      t.includes("official") ||
-      t.includes("original");
-
-    return isOfficialSource;
-  });
-
-  if (strictResults.length >= 5) {
-    return strictResults.slice(0, 15);
-  }
-
-  // Tier 2: Moderately relaxed check (exclude covers, remixes, and explicit lyric channels, but allow original videos from other channels if not enough strict results)
-  const relaxedResults = results.filter(r => {
-    const t = r.title.toLowerCase();
-    const a = (r.rawArtist || r.artist || "").toLowerCase();
-
-    // Still exclude covers, remixes, etc. (essential for original artist filter)
-    const titleBlacklist = [
-      "cover", "remix", "tribute", "karaoke", "instrumental", "reaction",
-      "fanmade", "fan-made", "mashup", "parody", "tutorial", "how to play",
-      "choreography", "dance cover", "1 hour", "1hour", "looped", "slowed",
-      "reverb", "nightcore", "acapella", "guitar cover", "drum cover",
-      "piano cover", "bass cover", "live cover", "vocals only", "pitched",
-      "8d audio", "8d version", "earrape", "bass boosted", "mash-up",
-      "speed up", "sped up", "slow down", "slowed down"
-    ];
-    if (titleBlacklist.some(term => t.includes(term))) return false;
-
-    // Still exclude channels that are clearly fake/karaoke/covers/remixes
-    const channelBlacklist = [
-      "covers", "karaoke", "nightcore", "repost", "reloaded", "synthesia"
-    ];
-    if (channelBlacklist.some(term => a.includes(term))) return false;
-
-    return true;
-  });
-
-  // Combine them, ensuring uniqueness by videoId
-  const combined = [...strictResults];
-  const seenIds = new Set(combined.map(r => r.videoId));
-
-  for (const r of relaxedResults) {
-    if (!seenIds.has(r.videoId)) {
-      combined.push(r);
-      seenIds.add(r.videoId);
-    }
-  }
-
-  // Final fallback: if combined is empty, return the top raw results so search is never completely broken
-  if (combined.length === 0) {
-    return results.slice(0, 15);
-  }
-
-  return combined.slice(0, 15);
+  return results.slice(0, 15);
 }
 
 // Scraper function to search YouTube without an API key
 async function searchYoutubeScraper(query: string, mode?: string) {
-  const suffix = mode === "artist" ? " greatest hits" : " official release";
   // Ensure we search for videos only to avoid playlists
-  const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + suffix)}&sp=EgIQAQ%253D%253D`;
+  const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=EgIQAQ%253D%253D`;
   
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 2500); // Strict 2.5s timeout to prevent server hang
@@ -185,6 +97,7 @@ async function searchYoutubeScraper(query: string, mode?: string) {
                     title: cleanString(title),
                     artist: cleanString(artist),
                     rawArtist: artist,
+                    thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
                   });
                   if (results.length >= 50) {
                     break;
@@ -212,6 +125,7 @@ async function searchYoutubeScraper(query: string, mode?: string) {
       videoId,
       title: query,
       artist: "YouTube Video",
+      thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
     }];
   }
 
@@ -226,12 +140,11 @@ app.post("/api/search", async (req, res) => {
       return res.status(400).json({ error: "Query is required" });
     }
 
-    const suffix = mode === "artist" ? " greatest hits" : " official release";
     const ytKey = process.env.YOUTUBE_API_KEY;
 
     if (ytKey && ytKey.trim() !== "") {
       console.log("Using official YouTube Data API v3 for search:", query, "mode:", mode);
-      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query + suffix)}&type=video&maxResults=50&key=${ytKey.trim()}`;
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=50&key=${ytKey.trim()}`;
       
       const ytResponse = await fetch(searchUrl);
       if (ytResponse.ok) {
@@ -242,6 +155,7 @@ app.post("/api/search", async (req, res) => {
             title: cleanString(item.snippet.title || "Unknown Title"),
             artist: cleanString(item.snippet.channelTitle || "YouTube Music"),
             rawArtist: item.snippet.channelTitle || "YouTube Music",
+            thumbnail: `https://i.ytimg.com/vi/${item.id.videoId}/hqdefault.jpg`,
           })).filter((item: any) => item.videoId);
           
           if (results.length > 0) {
