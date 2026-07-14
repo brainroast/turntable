@@ -3,6 +3,8 @@ export interface Track {
   title: string;
   artist: string;
   thumbnail?: string;
+  blobUrl?: string;
+  isDownloading?: boolean;
 }
 
 export interface PlayerState {

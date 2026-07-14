@@ -265,6 +265,40 @@ app.post("/api/search", async (req, res) => {
   }
 });
 
+app.get("/api/download/:videoId", async (req, res) => {
+  try {
+    const videoId = req.params.videoId;
+    if (!videoId) {
+      return res.status(400).json({ error: "Video ID is required" });
+    }
+
+    const url = `https://www.youtube.com/watch?v=${videoId}`;
+    
+    // Default to webm for audio, although it might be m4a. We'll use webm as fallback.
+    res.setHeader("Content-Disposition", `attachment; filename="${videoId}.webm"`);
+    res.setHeader("Content-Type", "audio/webm");
+
+    const { spawn } = require('child_process');
+    const ytDlp = spawn('./yt-dlp', ['-f', 'bestaudio', '-o', '-', url]);
+
+    ytDlp.stdout.pipe(res);
+
+    ytDlp.stderr.on('data', (data) => {
+      console.log(`yt-dlp log: ${data}`);
+    });
+    
+    ytDlp.on('close', (code) => {
+      if (code !== 0) {
+        console.error(`yt-dlp process exited with code ${code}`);
+      }
+    });
+
+  } catch (error: any) {
+    console.error("Error in /api/download:", error);
+    res.status(500).json({ error: "Failed to download audio" });
+  }
+});
+
 // Setup Vite Dev server or Production static file serving
 async function setupServer() {
   if (process.env.NODE_ENV !== "production") {
